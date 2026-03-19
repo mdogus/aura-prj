@@ -26,6 +26,8 @@ Bu doküman, AURA Faz 1'i Render üzerinde pilot kullanıma açmak için en kıs
 
 Bu kombinasyon, kısa demo ve tanıtım için en düşük maliyetli başlangıçtır.
 
+Bu demo yapılandırmasında her deploy sonrası demo seed verisi otomatik olarak yeniden kurulur.
+
 ## Bu ekonomik kurulumun sınırları
 
 - Free web service 15 dakika boşta kalınca uyur.
