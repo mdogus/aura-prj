@@ -2,15 +2,11 @@ services:
   - type: web
     env: python
     name: aura-prj
-    plan: starter
+    plan: free
     buildCommand: bash ./build.sh
     startCommand: gunicorn config.wsgi:application --chdir src
     healthCheckPath: /healthz/
     autoDeploy: true
-    disk:
-      name: media
-      mountPath: /var/data/media
-      sizeGB: 1
     envVars:
       - key: PYTHON_VERSION
         value: 3.13.2
@@ -18,8 +14,6 @@ services:
         value: false
       - key: SECRET_KEY
         generateValue: true
-      - key: MEDIA_ROOT
-        value: /var/data/media
       - key: DATABASE_URL
         fromDatabase:
           name: aura-db
@@ -27,4 +21,4 @@ services:
 
 databases:
   - name: aura-db
-    plan: basic-256mb
+    plan: free

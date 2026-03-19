@@ -19,13 +19,26 @@ Bu doküman, AURA Faz 1'i Render üzerinde pilot kullanıma açmak için en kıs
 - build komutları: `build.sh`
 - korumalı dosya indirme akışı
 
-## Önerilen pilot kurulumu
+## Demo için en ekonomik kurulum
 
-- Web service planı: `starter`
-- PostgreSQL planı: `basic-256mb`
-- Persistent disk: `1 GB`
+- Web service planı: `free`
+- PostgreSQL planı: `free`
 
-Bu kombinasyon, küçük pilot için en düşük riskli başlangıçtır.
+Bu kombinasyon, kısa demo ve tanıtım için en düşük maliyetli başlangıçtır.
+
+## Bu ekonomik kurulumun sınırları
+
+- Free web service 15 dakika boşta kalınca uyur.
+- İlk istekten sonra yeniden açılması yaklaşık bir dakika sürebilir.
+- Free web service persistent disk kullanamaz.
+- Bu nedenle yüklenen yerel dosyalar yeniden deploy, restart veya spin-down sonrası kaybolabilir.
+- Free Render Postgres veritabanı 30 gün sonra sona erer.
+
+Gerçek pilot için daha güvenli yapı:
+
+- web: `starter`
+- postgres: `basic-256mb`
+- persistent disk: `1 GB`
 
 ## Kurulum adımları
 
@@ -53,5 +66,4 @@ python manage.py seed_demo_users --dataset demo --reset
 
 - `SECRET_KEY` Render tarafından üretilir.
 - `DATABASE_URL` Render PostgreSQL'den gelir.
-- Yüklenen dosyalar `/var/data/media` altında tutulur.
-- Uygulama içindeki dosya bağlantıları artık doğrudan media URL'sine değil, Django içindeki korumalı indirme rotasına gider.
+- Uygulama içindeki dosya bağlantıları Django içindeki korumalı indirme rotasına gider.
