@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load ui_extras %}
+
+{% block title %}Öğrenci Paneli | AURA{% endblock %}
+
+{% block content %}
+    <section class="panel stack" aria-labelledby="student-dashboard-title">
+        <div class="page-intro">
+            <p class="eyebrow">
+                <svg class="icon" aria-hidden="true"><use href="#icon-home"></use></svg>
+                Öğrenci görünümü
+            </p>
+            <h1 id="student-dashboard-title">Görme engelli öğrenci paneli</h1>
+            <p class="muted">Akademik destek taleplerinizi oluşturabilir, süreci takip edebilir ve eşleşen gönüllüyle iletişim kurabilirsiniz.</p>
+        </div>
+
+        <div class="metric-grid two" aria-label="Talep özeti">
+            <article class="metric-card">
+                <span class="metric-label">Toplam talep</span>
+                <span class="metric-value">{{ request_count }}</span>
+            </article>
+            <article class="metric-card">
+                <span class="metric-label">Açık talep</span>
+                <span class="metric-value">{{ open_request_count }}</span>
+            </article>
+        </div>
+
+        <div class="card-grid two">
+            <article class="card stack-sm">
+                <h2 class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>
+                    Hızlı işlemler
+                </h2>
+                <div class="action-row">
+                    <a class="button" href="{% url 'support:student_request_create' %}">
+                        <svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>
+                        Yeni destek talebi
+                    </a>
+                    <a class="button button-secondary" href="{% url 'support:student_request_list' %}">
+                        <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                        Tüm taleplerim
+                    </a>
+                </div>
+            </article>
+            <article class="card stack-sm">
+                <h2 class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-user"></use></svg>
+                    Profil özeti
+                </h2>
+                <p><strong>Üniversite:</strong> {{ user.university|default:"Belirtilmedi" }}</p>
+                <p><strong>Bölüm:</strong> {{ user.department|default:"Belirtilmedi" }}</p>
+                <p><strong>İletişim tercihi:</strong> {{ user.preferred_communication|default:"Belirtilmedi" }}</p>
+            </article>
+        </div>
+
+        <div class="card stack-sm">
+            <h2 class="section-heading">
+                <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                Son talepler
+            </h2>
+            {% if recent_requests %}
+                <div class="feed" role="list" aria-label="Son talepler">
+                    {% for request_item in recent_requests %}
+                        <article class="feed-item feed-item-highlight" role="listitem">
+                            <h2 class="request-link-title">
+                                <a class="request-link" href="{% url 'support:student_request_detail' request_item.pk %}">
+                                    <span class="icon-wrap" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#icon-file"></use></svg></span>
+                                    <span class="request-link-text">{{ request_item.title }}</span>
+                                </a>
+                            </h2>
+                            <div class="feed-meta">
+                                {% render_badge 'status' request_item.status request_item.get_status_display %}
+                                {% render_badge 'urgency' request_item.urgency request_item.get_urgency_display %}
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state" role="status">
+                    <strong>Henüz destek talebi yok</strong>
+                    <p class="muted">İlk talebinizi oluşturduğunuzda burada durum özetlerini göreceksiniz.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="card stack-sm">
+            <h2 class="section-heading">
+                <svg class="icon" aria-hidden="true"><use href="#icon-bell"></use></svg>
+                Son bildirimler
+            </h2>
+            {% if recent_notifications %}
+                <div class="feed" role="list" aria-label="Son bildirimler">
+                    {% for notification in recent_notifications %}
+                        <article class="feed-item" role="listitem">
+                            <p><strong>{{ notification.title }}</strong></p>
+                            <p class="muted">{{ notification.body|default:"Açıklama bulunmuyor." }}</p>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state" role="status">
+                    <strong>Henüz bildirim yok</strong>
+                    <p class="muted">Talep oluşturduğunuzda ve eşleşme gerçekleştiğinde bildirimler burada görünür.</p>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}

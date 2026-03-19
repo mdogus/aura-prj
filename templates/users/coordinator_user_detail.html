@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load ui_extras %}
+
+{% block title %}Kullanıcı Detayı | AURA{% endblock %}
+
+{% block content %}
+    <section class="panel stack" aria-labelledby="user-detail-title">
+        <div class="nav-row">
+            <a class="button button-secondary" href="{% url 'users:coordinator_user_list' %}">
+                <svg class="icon" aria-hidden="true"><use href="#icon-arrow-left"></use></svg>
+                Listeye dön
+            </a>
+            <a class="button button-secondary" href="{% url 'dashboard:coordinator' %}">
+                <svg class="icon" aria-hidden="true"><use href="#icon-home"></use></svg>
+                Panel
+            </a>
+        </div>
+
+        <div class="page-intro">
+            <p class="eyebrow">
+                <svg class="icon" aria-hidden="true"><use href="#icon-user"></use></svg>
+                Kullanıcı detayı
+            </p>
+            <h1 id="user-detail-title">{{ managed_user }}</h1>
+            <p class="muted">Kullanıcı profili, aktiflik akışı ve yönetim geçmişi</p>
+        </div>
+
+        <nav class="section-jump" aria-label="Kullanıcı detayı bölümleri">
+            <a class="section-chip" href="#profil-ozeti">
+                <svg class="icon" aria-hidden="true"><use href="#icon-user"></use></svg>
+                Profil özeti
+            </a>
+            <a class="section-chip" href="#kullanim-ozeti">
+                <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                Kullanım özeti
+            </a>
+            <a class="section-chip" href="#aktiflik-yonetimi">
+                <svg class="icon" aria-hidden="true"><use href="#icon-filter"></use></svg>
+                Aktiflik yönetimi
+            </a>
+            <a class="section-chip" href="#islem-gecmisi">
+                <svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg>
+                İşlem geçmişi
+            </a>
+        </nav>
+
+        <div class="card-grid two">
+            <article id="profil-ozeti" class="card detail-list section-anchor" aria-labelledby="user-summary-heading">
+                <h2 id="user-summary-heading" class="sr-only">Kullanıcı profil özeti</h2>
+                <p><strong>Kullanıcı adı:</strong> {{ managed_user.username }}</p>
+                <p><strong>E-posta:</strong> {{ managed_user.email }}</p>
+                <p><strong>Rol:</strong> {% render_badge 'role' managed_user.role managed_user.get_role_display %}</p>
+                <p><strong>Üniversite:</strong> {{ managed_user.university|default:"Belirtilmedi" }}</p>
+                <p><strong>Bölüm:</strong> {{ managed_user.department|default:"Belirtilmedi" }}</p>
+                <p>
+                    <strong>Durum:</strong>
+                    {% if managed_user.is_active %}
+                        {% render_badge 'user_state' 'active' 'Aktif' %}
+                    {% else %}
+                        {% render_badge 'user_state' 'inactive' 'Pasif' %}
+                    {% endif %}
+                </p>
+            </article>
+            <article id="aktiflik-yonetimi" class="card stack-sm section-anchor" aria-labelledby="user-status-heading">
+                <h2 id="user-status-heading" class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-filter"></use></svg>
+                    Aktiflik yönetimi
+                </h2>
+                <p class="section-note">Pasife alma işlemlerinde kısa neden yazılması zorunludur.</p>
+                <form method="post" action="{% url 'users:coordinator_user_toggle_active' managed_user.pk %}" novalidate>
+                    {% csrf_token %}
+                    {% include "includes/form_fields.html" with form=action_form %}
+                    <div class="form-actions">
+                        <button type="submit">
+                            <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+                            {% if managed_user.is_active %}Kullanıcıyı pasife al{% else %}Kullanıcıyı yeniden aktive et{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </article>
+        </div>
+
+        <div id="kullanim-ozeti" class="metric-grid two section-anchor" aria-label="Kullanıcı kullanım özeti">
+            <article class="metric-card">
+                <span class="metric-label">Oluşturduğu talep</span>
+                <span class="metric-value">{{ user_request_summary.created_count }}</span>
+            </article>
+            <article class="metric-card">
+                <span class="metric-label">Üstlendiği destek</span>
+                <span class="metric-value">{{ user_request_summary.assigned_count }}</span>
+            </article>
+            <article class="metric-card">
+                <span class="metric-label">Aktif destek</span>
+                <span class="metric-value">{{ user_request_summary.active_assigned_count }}</span>
+            </article>
+            <article class="metric-card">
+                <span class="metric-label">Tamamlanan destek</span>
+                <span class="metric-value">{{ user_request_summary.completed_assigned_count }}</span>
+            </article>
+            <article class="metric-card">
+                <span class="metric-label">Okunmamış bildirim</span>
+                <span class="metric-value">{{ user_request_summary.unread_notification_count }}</span>
+            </article>
+        </div>
+
+        <div id="islem-gecmisi" class="card stack-sm section-anchor" aria-labelledby="user-action-history-heading">
+            <h2 id="user-action-history-heading" class="section-heading">
+                <svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg>
+                İşlem geçmişi
+            </h2>
+            {% if management_actions %}
+                <div class="timeline" role="list" aria-label="Kullanıcı yönetim geçmişi">
+                    {% for entry in management_actions %}
+                        <article class="timeline-item" role="listitem">
+                            <div class="feed-meta">
+                                <strong>{{ entry.get_action_type_display }}</strong>
+                                <span>{{ entry.created_at|date:"d.m.Y H:i" }}</span>
+                            </div>
+                            <p class="muted">İşlemi yapan: {{ entry.actor|default:"Sistem" }}</p>
+                            <p>{{ entry.note|default:"Not eklenmedi." }}</p>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state" role="status">
+                    <strong>Henüz işlem geçmişi yok</strong>
+                    <p class="muted">Bu kullanıcı için yapılan pasifleme ve yeniden aktive etme işlemleri burada görünür.</p>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}

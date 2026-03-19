@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Yeni Destek Talebi | AURA{% endblock %}
+
+{% block content %}
+    <section class="panel stack" aria-labelledby="request-form-title">
+        <div class="nav-row">
+            <a class="button button-secondary" href="{% url 'dashboard:student' %}">
+                <svg class="icon" aria-hidden="true"><use href="#icon-arrow-left"></use></svg>
+                Öğrenci paneli
+            </a>
+        </div>
+
+        <div class="page-intro">
+            <p class="eyebrow">
+                <svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>
+                Yeni talep
+            </p>
+            <h1 id="request-form-title">Yeni destek talebi</h1>
+            <p class="muted">Ders, konu ve ihtiyaç açıklamasını ne kadar net yazarsanız eşleşme süreci o kadar hızlanır.</p>
+        </div>
+
+        <div class="note-card" role="note" aria-labelledby="request-form-note-title">
+            <svg class="icon" aria-hidden="true"><use href="#icon-file"></use></svg>
+            <div>
+                <strong id="request-form-note-title">İyi bir talep nasıl görünür?</strong>
+                <p>Ders adı, konu, ihtiyaç özeti ve bu desteğe ne kadar sürede ihtiyaç duyduğunuz net olduğunda gönüllü eşleşmesi daha hızlı olur.</p>
+            </div>
+        </div>
+
+        <form method="post" novalidate aria-describedby="request-form-help">
+            {% csrf_token %}
+            <p id="request-form-help" class="field-help">Zorunlu alanları doldurduktan sonra talebiniz listeye eklenir ve koordinasyon ekibi tarafından izlenebilir.</p>
+            {% include "includes/form_fields.html" with form=form %}
+            <div class="form-actions">
+                <button type="submit">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+                    Talebi oluştur
+                </button>
+            </div>
+        </form>
+    </section>
+{% endblock %}

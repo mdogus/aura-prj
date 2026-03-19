@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% load ui_extras %}
+
+{% block title %}Gönüllü Paneli | AURA{% endblock %}
+
+{% block content %}
+    <section class="panel stack" aria-labelledby="volunteer-dashboard-title">
+        <div class="page-intro">
+            <p class="eyebrow">
+                <svg class="icon" aria-hidden="true"><use href="#icon-home"></use></svg>
+                Gönüllü görünümü
+            </p>
+            <h1 id="volunteer-dashboard-title">Gönüllü öğrenci paneli</h1>
+            <p class="muted">Açık talepleri inceleyebilir, uygun destekleri üstlenebilir ve aktif süreçleri buradan takip edebilirsiniz.</p>
+        </div>
+
+        <div class="dashboard-split">
+            <div class="stack">
+                <article class="card stack-sm">
+                    <h2 class="section-heading">
+                        <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                        Hızlı işlemler
+                    </h2>
+                    <div class="action-row">
+                        <a class="button" href="{% url 'support:volunteer_open_request_list' %}">
+                            <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                            Açık talepler
+                        </a>
+                        <a class="button button-secondary" href="{% url 'support:volunteer_active_support_list' %}">
+                            <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+                            Aktif desteklerim
+                        </a>
+                    </div>
+                    <div class="metric-grid two" role="list" aria-label="Gönüllü özet metrikleri">
+                        <article class="metric-card" role="listitem">
+                            <span class="metric-label">Açık talep</span>
+                            <span class="metric-value">{{ open_request_count }}</span>
+                        </article>
+                        <article class="metric-card" role="listitem">
+                            <span class="metric-label">Aktif destek</span>
+                            <span class="metric-value">{{ active_support_count }}</span>
+                        </article>
+                    </div>
+                </article>
+
+                <article class="card stack-sm">
+                    <h2 class="section-heading">
+                        <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                        Yeni açılan talepler
+                    </h2>
+                    {% if recent_open_requests %}
+                        <div class="feed" role="list" aria-label="Yeni açılan talepler">
+                            {% for request_item in recent_open_requests %}
+                                <article class="feed-item" role="listitem">
+                                    <h2 class="request-link-title">
+                                        <a class="request-link" href="{% url 'support:volunteer_request_detail' request_item.pk %}">
+                                            <span class="icon-wrap" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#icon-file"></use></svg></span>
+                                            <span class="request-link-text">{{ request_item.title }}</span>
+                                        </a>
+                                    </h2>
+                                    <div class="feed-meta">
+                                        {% render_badge 'urgency' request_item.urgency request_item.get_urgency_display %}
+                                        {% render_badge 'category' request_item.category request_item.get_category_display %}
+                                    </div>
+                                    {% if request_item.timing_summary %}
+                                        <p class="muted"><strong>Son tarih:</strong> {{ request_item.timing_summary }}</p>
+                                    {% endif %}
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state" role="status">
+                            <strong>Şu anda üstlenilebilecek açık talep yok</strong>
+                            <p class="muted">Yeni talepler açıldığında burada görüntülenecek.</p>
+                        </div>
+                    {% endif %}
+                </article>
+
+                <article class="card stack-sm">
+                    <h2 class="section-heading">
+                        <svg class="icon" aria-hidden="true"><use href="#icon-bell"></use></svg>
+                        Son bildirimler
+                    </h2>
+                    {% if recent_notifications %}
+                        <div class="feed" role="list" aria-label="Son bildirimler">
+                            {% for notification in recent_notifications %}
+                                <article class="feed-item" role="listitem">
+                                    <p><strong>{{ notification.title }}</strong></p>
+                                    <p class="muted">{{ notification.body|default:"Açıklama bulunmuyor." }}</p>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state" role="status">
+                            <strong>Henüz bildirim yok</strong>
+                            <p class="muted">Üstlendiğiniz taleplerle ilgili gelişmeler burada görünür.</p>
+                        </div>
+                    {% endif %}
+                </article>
+            </div>
+
+            <aside class="stack" aria-label="Gönüllü yan paneli">
+                <article class="card stack-sm" aria-labelledby="volunteer-score-heading">
+                    <h2 id="volunteer-score-heading" class="section-heading">
+                        <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+                        Gönüllü puanı
+                    </h2>
+                    <p class="section-note">Puanınız üstlendiğiniz destek sayısı, tamamlanan çalışmalar ve katkı verdiğiniz alanlara göre hesaplanır.</p>
+                    <div class="level-pill" aria-label="Gönüllü seviyesi: {{ volunteer_level.label }}">
+                        <svg class="icon" aria-hidden="true"><use href="#{{ volunteer_level.icon }}"></use></svg>
+                        <span>Seviye</span>
+                        <strong>{{ volunteer_level.label }}</strong>
+                    </div>
+                    <article class="metric-card score-total" aria-label="Toplam gönüllü puanı">
+                        <span class="metric-label">Toplam puan</span>
+                        <span class="metric-value">{{ volunteer_score }}</span>
+                        <span class="muted">Katkı seviyesi: {{ volunteer_level.label }}</span>
+                    </article>
+                    {% if next_volunteer_level %}
+                        <p class="muted">
+                            Bir sonraki seviye: <strong>{{ next_volunteer_level.label }}</strong>
+                            için {{ next_volunteer_level.remaining }} puan daha kazanmanız yeterli.
+                        </p>
+                    {% else %}
+                        <p class="muted">Şu anda en yüksek gönüllü seviyesindesiniz.</p>
+                    {% endif %}
+                    <div class="note-card" role="status" aria-labelledby="volunteer-goal-title">
+                        <svg class="icon" aria-hidden="true"><use href="#icon-target"></use></svg>
+                        <div>
+                            <strong id="volunteer-goal-title">{{ volunteer_goal.title }}</strong>
+                            <p>{{ volunteer_goal.body }}</p>
+                        </div>
+                    </div>
+                    <p class="muted">{{ volunteer_motivation_message }}</p>
+                    <div class="stack-sm" aria-labelledby="volunteer-level-roadmap-heading">
+                        <h3 id="volunteer-level-roadmap-heading" class="field-title">Seviye yolu</h3>
+                        <div class="level-roadmap" role="list" aria-label="Gönüllü seviye yolu">
+                            {% for level in volunteer_level_roadmap %}
+                                <article class="level-roadmap-item{% if level.is_reached %} is-reached{% endif %}{% if level.is_current %} is-current{% endif %}{% if level.is_next %} is-next{% endif %}" role="listitem" aria-label="{{ level.label }} seviyesi">
+                                    <span class="level-roadmap-icon" aria-hidden="true">
+                                        <svg class="icon" aria-hidden="true"><use href="#{{ level.icon }}"></use></svg>
+                                    </span>
+                                    <div class="stack-sm">
+                                        <div class="feed-meta">
+                                            <strong>{{ level.label }}</strong>
+                                            <span>{{ level.threshold }}+ puan</span>
+                                        </div>
+                                        <p class="muted">{{ level.description }}</p>
+                                        {% if level.is_current %}
+                                            <p class="muted"><strong>Şu an bu seviyedesiniz.</strong></p>
+                                        {% elif level.is_next %}
+                                            <p class="muted"><strong>Bir sonraki hedefiniz.</strong></p>
+                                        {% elif level.is_reached %}
+                                            <p class="muted">Bu seviyeyi geçtiniz.</p>
+                                        {% endif %}
+                                    </div>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="metric-grid two" role="list" aria-label="Puan özeti">
+                        <article class="metric-card" role="listitem">
+                            <span class="metric-label">Üstlenilen destek</span>
+                            <span class="metric-value">{{ total_supported_count }}</span>
+                        </article>
+                        <article class="metric-card" role="listitem">
+                            <span class="metric-label">Tamamlanan destek</span>
+                            <span class="metric-value">{{ completed_support_count }}</span>
+                        </article>
+                        <article class="metric-card" role="listitem">
+                            <span class="metric-label">Aktif süreç</span>
+                            <span class="metric-value">{{ active_support_count }}</span>
+                        </article>
+                        <article class="metric-card" role="listitem">
+                            <span class="metric-label">Katkı alanı</span>
+                            <span class="metric-value">{{ supported_category_count }}</span>
+                        </article>
+                        <article class="metric-card" role="listitem">
+                            <span class="metric-label">Haftalık seri</span>
+                            <span class="metric-value">{{ weekly_streak }}</span>
+                            <span class="muted">ardışık hafta</span>
+                        </article>
+                        <article class="metric-card" role="listitem">
+                            <span class="metric-label">Son 30 gün katkısı</span>
+                            <span class="metric-value">{{ recent_30_day_support_count }}</span>
+                            <span class="muted">güncel destek</span>
+                        </article>
+                        <article class="metric-card" role="listitem">
+                            <span class="metric-label">Seri bonusu</span>
+                            <span class="metric-value">+{{ streak_score_bonus }}</span>
+                            <span class="muted">puan</span>
+                        </article>
+                        <article class="metric-card" role="listitem">
+                            <span class="metric-label">30 gün bonusu</span>
+                            <span class="metric-value">+{{ recent_activity_score_bonus }}</span>
+                            <span class="muted">puan</span>
+                        </article>
+                    </div>
+                    {% if top_supported_categories %}
+                        <div class="stack-sm" aria-labelledby="volunteer-top-categories-heading">
+                            <h3 id="volunteer-top-categories-heading" class="field-title">En çok katkı verdiğiniz alanlar</h3>
+                            <div class="contribution-list" role="list" aria-label="En çok katkı verilen alanlar">
+                                {% for item in top_supported_categories %}
+                                    <div class="contribution-item" role="listitem">
+                                        {% render_badge 'category' item.value item.label %}
+                                        <span class="muted">{{ item.count }} destek</span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="empty-state" role="status">
+                            <strong>Puanınız oluşmaya hazır</strong>
+                            <p class="muted">İlk desteğinizi üstlendiğinizde burada puanınız ve katkı alanlarınız görünür.</p>
+                        </div>
+                    {% endif %}
+                    {% if latest_completed_support %}
+                        <div class="stack-sm" aria-labelledby="volunteer-last-completed-heading">
+                            <h3 id="volunteer-last-completed-heading" class="field-title">Son tamamlanan destek</h3>
+                            <article class="card stack-sm">
+                                <p><strong>{{ latest_completed_support.title }}</strong></p>
+                                <div class="feed-meta">
+                                    {% render_badge 'category' latest_completed_support.category latest_completed_support.get_category_display %}
+                                    {% render_badge 'status' latest_completed_support.status latest_completed_support.get_status_display %}
+                                </div>
+                                <p class="muted">
+                                    {{ latest_completed_support.course_name }} ·
+                                    {{ latest_completed_support.updated_at|date:"d.m.Y" }}
+                                </p>
+                            </article>
+                        </div>
+                    {% endif %}
+                    <div class="stack-sm" aria-labelledby="volunteer-score-rules-heading">
+                        <h3 id="volunteer-score-rules-heading" class="field-title">Puan nasıl artar?</h3>
+                        <ul class="score-rules">
+                            {% for rule in volunteer_score_rules %}
+                                <li>{{ rule }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </article>
+
+                <article class="card stack-sm">
+                    <h2 class="section-heading">
+                        <svg class="icon" aria-hidden="true"><use href="#icon-user"></use></svg>
+                        Gönüllü profili
+                    </h2>
+                    <p><strong>Destek alanları:</strong> {{ user.support_topics|default:"Belirtilmedi" }}</p>
+                    <p><strong>Müsaitlik:</strong> {{ user.availability_notes|default:"Belirtilmedi" }}</p>
+                </article>
+            </aside>
+        </div>
+    </section>
+{% endblock %}

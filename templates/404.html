@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Sayfa Bulunamadı | AURA{% endblock %}
+
+{% block content %}
+    <section class="panel stack" aria-labelledby="not-found-title">
+        <div class="page-intro">
+            <p class="eyebrow">
+                <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                Sayfa bulunamadı
+            </p>
+            <h1 id="not-found-title">Aradığınız sayfaya ulaşılamadı</h1>
+            <p class="muted">Bağlantı değişmiş, silinmiş ya da yanlış yazılmış olabilir. Aşağıdaki güvenli yönlendirmelerle devam edebilirsiniz.</p>
+        </div>
+
+        <div class="action-row">
+            <a class="button" href="{% url 'home' %}">
+                <svg class="icon" aria-hidden="true"><use href="#icon-home"></use></svg>
+                Ana sayfa
+            </a>
+            <a class="button button-secondary" href="{% url 'dashboard:home' %}">
+                <svg class="icon" aria-hidden="true"><use href="#icon-user"></use></svg>
+                Panel
+            </a>
+        </div>
+    </section>
+{% endblock %}

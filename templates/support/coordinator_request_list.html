@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% load ui_extras %}
+
+{% block title %}Tüm Talepler | AURA{% endblock %}
+
+{% block content %}
+    <section class="panel stack" aria-labelledby="coordinator-request-list-title">
+        <div class="nav-row">
+            <a class="button button-secondary" href="{% url 'dashboard:coordinator' %}">
+                <svg class="icon" aria-hidden="true"><use href="#icon-arrow-left"></use></svg>
+                Koordinatör paneli
+            </a>
+        </div>
+
+        <div class="page-intro">
+            <p class="eyebrow">
+                <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                Talep yönetimi
+            </p>
+            <h1 id="coordinator-request-list-title">Tüm destek talepleri</h1>
+            <p class="muted">Öncelik, atama durumu ve içerik aramasıyla talepleri daha hızlı triage edebilirsiniz.</p>
+        </div>
+
+        <div class="metric-grid two" aria-label="Filtre sonucu özeti">
+            <article class="metric-card">
+                <span class="metric-label">Listelenen talep</span>
+                <span class="metric-value">{{ result_count }}</span>
+            </article>
+            <article class="metric-card">
+                <span class="metric-label">Aktif kayıt</span>
+                <span class="metric-value">{{ active_result_count }}</span>
+            </article>
+            <article class="metric-card">
+                <span class="metric-label">Atanmamış kayıt</span>
+                <span class="metric-value">{{ unassigned_result_count }}</span>
+            </article>
+            <article class="metric-card">
+                <span class="metric-label">Kritik öncelik</span>
+                <span class="metric-value">{{ critical_result_count }}</span>
+            </article>
+            <article class="metric-card">
+                <span class="metric-label">Süresi yaklaşan</span>
+                <span class="metric-value">{{ due_soon_result_count }}</span>
+            </article>
+            <article class="metric-card">
+                <span class="metric-label">Süresi geçen</span>
+                <span class="metric-value">{{ overdue_result_count }}</span>
+            </article>
+        </div>
+
+        <div class="section-jump" aria-label="Hızlı talep filtreleri">
+            <a class="section-chip" href="{% url 'support:coordinator_request_list' %}?assigned=unassigned">Atanmamışlar</a>
+            <a class="section-chip" href="{% url 'support:coordinator_request_list' %}?priority=critical">Kritikler</a>
+            <a class="section-chip" href="{% url 'support:coordinator_request_list' %}?deadline=due_soon">Süresi yaklaşanlar</a>
+            <a class="section-chip" href="{% url 'support:coordinator_request_list' %}?deadline=overdue">Süresi geçenler</a>
+            <a class="section-chip" href="{% url 'support:coordinator_request_list' %}?status=open">Açık talepler</a>
+        </div>
+
+        <form method="get" class="filter-form three" aria-label="Talep filtreleri">
+            <div class="field-group">
+                <label for="id_q">Ara</label>
+                <input id="id_q" type="text" name="q" value="{{ search_query }}" placeholder="Talep başlığı, ders, konu veya öğrenci">
+            </div>
+            <div class="field-group">
+                <label for="id_status">Durum</label>
+                <select id="id_status" name="status">
+                    <option value="">Tüm durumlar</option>
+                    {% for value, label in status_choices %}
+                        <option value="{{ value }}"{% if selected_status == value %} selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field-group">
+                <label for="id_urgency">Aciliyet</label>
+                <select id="id_urgency" name="urgency">
+                    <option value="">Tüm seviyeler</option>
+                    {% for value, label in urgency_choices %}
+                        <option value="{{ value }}"{% if selected_urgency == value %} selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field-group">
+                <label for="id_priority">Koordinasyon önceliği</label>
+                <select id="id_priority" name="priority">
+                    <option value="">Tüm öncelikler</option>
+                    {% for value, label in priority_choices %}
+                        <option value="{{ value }}"{% if selected_priority == value %} selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field-group">
+                <label for="id_assigned">Atama durumu</label>
+                <select id="id_assigned" name="assigned">
+                    <option value="">Tümü</option>
+                    <option value="unassigned"{% if selected_assigned == "unassigned" %} selected{% endif %}>Atanmamış</option>
+                    <option value="assigned"{% if selected_assigned == "assigned" %} selected{% endif %}>Atanmış</option>
+                </select>
+            </div>
+            <div class="field-group">
+                <label for="id_category">Kategori</label>
+                <select id="id_category" name="category">
+                    <option value="">Tüm kategoriler</option>
+                    {% for value, label in category_choices %}
+                        <option value="{{ value }}"{% if selected_category == value %} selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field-group">
+                <label for="id_deadline">Zaman baskısı</label>
+                <select id="id_deadline" name="deadline">
+                    <option value="">Tümü</option>
+                    <option value="due_soon"{% if selected_deadline == "due_soon" %} selected{% endif %}>Süresi yaklaşan</option>
+                    <option value="overdue"{% if selected_deadline == "overdue" %} selected{% endif %}>Süresi geçen</option>
+                    <option value="dated"{% if selected_deadline == "dated" %} selected{% endif %}>Son tarihi olanlar</option>
+                </select>
+            </div>
+            <div class="form-actions">
+                <button type="submit">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-filter"></use></svg>
+                    Filtrele
+                </button>
+                <a class="button button-secondary" href="{% url 'support:coordinator_request_list' %}">Filtreleri temizle</a>
+            </div>
+        </form>
+
+        {% if requests %}
+            <div class="feed" role="list" aria-label="Tüm destek talepleri">
+                {% for request_item in requests %}
+                    <article class="feed-item" role="listitem">
+                        <h2 class="request-link-title">
+                            <a class="request-link" href="{% url 'support:coordinator_request_detail' request_item.pk %}">
+                                <span class="icon-wrap" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#icon-file"></use></svg></span>
+                                <span class="request-link-text">{{ request_item.title }}</span>
+                            </a>
+                        </h2>
+                        <div class="feed-meta">
+                            {% render_badge 'priority' request_item.priority request_item.get_priority_display %}
+                            {% render_badge 'status' request_item.status request_item.get_status_display %}
+                            {% render_badge 'urgency' request_item.urgency request_item.get_urgency_display %}
+                            {% render_badge 'category' request_item.category request_item.get_category_display %}
+                            {% if request_item.intervention_note_count %}
+                                <span class="badge badge-role-coordinator" aria-label="{{ request_item.intervention_note_count }} koordinasyon notu">
+                                    <svg class="icon badge-icon" aria-hidden="true"><use href="#icon-chat"></use></svg>
+                                    <span>Koordinasyon notu</span>
+                                    <span class="count-badge" aria-hidden="true">{{ request_item.intervention_note_count }}</span>
+                                </span>
+                            {% else %}
+                                <span class="badge badge-neutral" aria-label="Koordinasyon notu yok">
+                                    <svg class="icon badge-icon" aria-hidden="true"><use href="#icon-chat"></use></svg>
+                                    <span>Koordinasyon notu yok</span>
+                                </span>
+                            {% endif %}
+                        </div>
+                        <p class="muted">
+                            <strong>Öğrenci:</strong> {{ request_item.created_by }}
+                            <span aria-hidden="true"> | </span>
+                            <strong>Gönüllü:</strong> {{ request_item.assigned_volunteer|default:"Atanmadı" }}
+                        </p>
+                        <p><strong>Konu:</strong> {{ request_item.topic }}</p>
+                        <p class="muted">
+                            <strong>Son tarih:</strong> {{ request_item.effective_deadline_display|default:"Belirtilmedi" }}
+                            {% if request_item.timing_summary %}
+                                <span aria-hidden="true"> | </span>
+                                <strong>İhtiyaç süresi:</strong> {{ request_item.timing_summary }}
+                            {% endif %}
+                        </p>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state" role="status">
+                <strong>Filtrelere uyan talep bulunamadı</strong>
+                <p class="muted">Filtreleri sadeleştirerek veya temizleyerek tekrar deneyebilirsiniz.</p>
+            </div>
+        {% endif %}
+    </section>
+{% endblock %}

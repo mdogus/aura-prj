@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load ui_extras %}
+
+{% block title %}Destek Taleplerim | AURA{% endblock %}
+
+{% block content %}
+    <section class="panel stack" aria-labelledby="student-request-list-title">
+        <div class="nav-row">
+            <a class="button button-secondary" href="{% url 'dashboard:student' %}">
+                <svg class="icon" aria-hidden="true"><use href="#icon-arrow-left"></use></svg>
+                Panele dön
+            </a>
+            <a class="button" href="{% url 'support:student_request_create' %}">
+                <svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>
+                Yeni talep
+            </a>
+        </div>
+
+        <div class="page-intro">
+            <p class="eyebrow">
+                <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                Talep listesi
+            </p>
+            <h1 id="student-request-list-title">Destek taleplerim</h1>
+            <p class="muted">Buradan taleplerinizin durumunu izleyebilir ve detay ekranına geçebilirsiniz.</p>
+        </div>
+
+        {% if requests %}
+            <div class="stack">
+                <article class="card stack-sm" aria-labelledby="active-request-list-heading">
+                    <h2 id="active-request-list-heading" class="section-heading">
+                        <svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg>
+                        Aktif talepler
+                    </h2>
+                    {% if active_requests %}
+                        <div class="feed" role="list" aria-label="Aktif destek talepleri">
+                            {% for request_item in active_requests %}
+                                <article class="feed-item" role="listitem">
+                                    <h2 class="request-link-title">
+                                        <a class="request-link" href="{% url 'support:student_request_detail' request_item.pk %}">
+                                            <span class="icon-wrap" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#icon-file"></use></svg></span>
+                                            <span class="request-link-text">{{ request_item.title }}</span>
+                                        </a>
+                                    </h2>
+                                    <div class="feed-meta">
+                                        {% render_badge 'status' request_item.status request_item.get_status_display %}
+                                        {% render_badge 'urgency' request_item.urgency request_item.get_urgency_display %}
+                                        {% render_badge 'category' request_item.category request_item.get_category_display %}
+                                    </div>
+                                    <p><strong>Ders:</strong> {{ request_item.course_name }}</p>
+                                    <p><strong>Konu:</strong> {{ request_item.topic }}</p>
+                                    {% if request_item.timing_summary %}
+                                        <p><strong>İhtiyaç süresi:</strong> {{ request_item.timing_summary }}</p>
+                                    {% endif %}
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state" role="status">
+                            <strong>Aktif talep yok</strong>
+                            <p class="muted">Açık, eşleşmiş veya devam eden talepleriniz burada görünür.</p>
+                        </div>
+                    {% endif %}
+                </article>
+
+                <article class="card stack-sm" aria-labelledby="closed-request-list-heading">
+                    <h2 id="closed-request-list-heading" class="section-heading">
+                        <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+                        Tamamlanan ve kapanan talepler
+                    </h2>
+                    {% if closed_requests %}
+                        <div class="feed" role="list" aria-label="Tamamlanan ve kapanan destek talepleri">
+                            {% for request_item in closed_requests %}
+                                <article class="feed-item" role="listitem">
+                                    <h2 class="request-link-title">
+                                        <a class="request-link" href="{% url 'support:student_request_detail' request_item.pk %}">
+                                            <span class="icon-wrap" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#icon-file"></use></svg></span>
+                                            <span class="request-link-text">{{ request_item.title }}</span>
+                                        </a>
+                                    </h2>
+                                    <div class="feed-meta">
+                                        {% render_badge 'status' request_item.status request_item.get_status_display %}
+                                        {% render_badge 'urgency' request_item.urgency request_item.get_urgency_display %}
+                                        {% render_badge 'category' request_item.category request_item.get_category_display %}
+                                    </div>
+                                    <p><strong>Ders:</strong> {{ request_item.course_name }}</p>
+                                    <p><strong>Konu:</strong> {{ request_item.topic }}</p>
+                                    {% if request_item.timing_summary %}
+                                        <p><strong>İhtiyaç süresi:</strong> {{ request_item.timing_summary }}</p>
+                                    {% endif %}
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state" role="status">
+                            <strong>Henüz tamamlanan talep yok</strong>
+                            <p class="muted">Tamamlanan veya iptal edilen talepleriniz bu bölümde listelenir.</p>
+                        </div>
+                    {% endif %}
+                </article>
+            </div>
+        {% else %}
+            <div class="empty-state" role="status">
+                <strong>Henüz destek talebi oluşturmadınız</strong>
+                <p class="muted">Yeni bir talep açarak ders, materyal veya çalışma desteği sürecini başlatabilirsiniz.</p>
+            </div>
+        {% endif %}
+    </section>
+{% endblock %}

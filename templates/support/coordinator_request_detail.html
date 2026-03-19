@@ -1,0 +1,469 @@
+{% extends "base.html" %}
+{% load ui_extras %}
+
+{% block title %}Talep Detayı | AURA{% endblock %}
+
+{% block content %}
+    <section class="panel stack{% if active_section == 'all' %} request-detail-panel-all{% endif %}" aria-labelledby="coordinator-request-detail-title">
+        <div class="nav-row">
+            <a class="button button-secondary" href="{% url 'support:coordinator_request_list' %}">
+                <svg class="icon" aria-hidden="true"><use href="#icon-arrow-left"></use></svg>
+                Listeye dön
+            </a>
+            <a class="button button-secondary" href="{% url 'dashboard:coordinator' %}">
+                <svg class="icon" aria-hidden="true"><use href="#icon-home"></use></svg>
+                Panel
+            </a>
+        </div>
+
+        <div class="page-intro">
+            <p class="eyebrow">
+                <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                Koordinatör görünümü
+            </p>
+            <h1 id="coordinator-request-detail-title">{{ request_item.title }}</h1>
+            <div class="feed-meta">
+                {% render_badge 'priority' request_item.priority request_item.get_priority_display %}
+                {% render_badge 'status' request_item.status request_item.get_status_display %}
+                {% render_badge 'urgency' request_item.urgency request_item.get_urgency_display %}
+            </div>
+        </div>
+
+        <nav class="section-jump" aria-label="Talep bölümleri">
+            <a class="section-chip section-chip-all" href="?section=all"{% if active_section == "all" %} aria-current="page"{% endif %}>
+                <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                Tümü
+            </a>
+            <a class="section-chip" href="?section=overview"{% if active_section == "overview" %} aria-current="page"{% endif %}>
+                <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                Özet
+            </a>
+            <a class="section-chip" href="?section=management"{% if active_section == "management" %} aria-current="page"{% endif %}>
+                <svg class="icon" aria-hidden="true"><use href="#icon-filter"></use></svg>
+                Yönetim
+            </a>
+            <a class="section-chip" href="?section=notes" aria-label="Koordinasyon notları: {{ intervention_notes_count }}"{% if active_section == "notes" %} aria-current="page"{% endif %}>
+                <svg class="icon" aria-hidden="true"><use href="#icon-chat"></use></svg>
+                Koordinasyon notları
+                <span class="count-badge" aria-label="{{ intervention_notes_count }} koordinasyon notu">{{ intervention_notes_count }}</span>
+            </a>
+            <a class="section-chip" href="?section=history" aria-label="İşlem geçmişi: {{ activity_logs_count }}"{% if active_section == "history" %} aria-current="page"{% endif %}>
+                <svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg>
+                İşlem geçmişi
+                <span class="count-badge" aria-label="{{ activity_logs_count }} işlem kaydı">{{ activity_logs_count }}</span>
+            </a>
+            <a class="section-chip" href="?section=materials" aria-label="Kaynak dosyalar: {{ materials_count }}"{% if active_section == "materials" %} aria-current="page"{% endif %}>
+                <svg class="icon" aria-hidden="true"><use href="#icon-upload"></use></svg>
+                Kaynak dosyalar
+                <span class="count-badge" aria-label="{{ materials_count }} kaynak dosya">{{ materials_count }}</span>
+            </a>
+            <a class="section-chip" href="?section=messages" aria-label="Mesajlar: {{ messages_count }}"{% if active_section == "messages" %} aria-current="page"{% endif %}>
+                <svg class="icon" aria-hidden="true"><use href="#icon-chat"></use></svg>
+                Mesajlar
+                <span class="count-badge" aria-label="{{ messages_count }} mesaj">{{ messages_count }}</span>
+            </a>
+        </nav>
+
+        {% if active_section == "overview" or active_section == "all" %}
+            <div id="talep-ozeti" class="section-anchor request-overview-layout{% if active_section == 'overview' %} request-overview-layout-split{% endif %}">
+                <div class="stack request-overview-main">
+                <article class="card detail-list request-overview-summary" aria-labelledby="request-summary-heading">
+                    <h2 id="request-summary-heading" class="sr-only">Talep özeti</h2>
+                    <p><strong>Talep sahibi:</strong> {{ request_item.created_by }}</p>
+                    <p><strong>Atanan gönüllü:</strong> {{ request_item.assigned_volunteer|default:"Henüz atanmadı" }}</p>
+                    <p><strong>Kategori:</strong> {{ request_item.get_category_display }}</p>
+                    <p><strong>Ders:</strong> {{ request_item.course_name }}</p>
+                    <p><strong>Konu:</strong> {{ request_item.topic }}</p>
+                    <p><strong>İhtiyaç süresi:</strong> {{ request_item.requested_duration_display|default:"Belirtilmedi" }}</p>
+                    <p><strong>Son tarih:</strong> {{ request_item.effective_deadline_display|default:"Belirtilmedi" }}</p>
+                    <p><strong>Kalan süre:</strong> {{ request_item.remaining_time_display|default:"Belirtilmedi" }}</p>
+                    <p><strong>Uygun olduğu zamanlar:</strong> {{ request_item.preferred_timing|default:"Belirtilmedi" }}</p>
+                </article>
+                <article class="card stack-sm request-overview-description" aria-labelledby="request-description-heading">
+                    <h2 id="request-description-heading">İhtiyaç açıklaması</h2>
+                    <p class="section-note">Talep metni ve akademik bağlam</p>
+                    <p>{{ request_item.description }}</p>
+                </article>
+                {% comment %} Overview preview cards moved to the side pane below for a cleaner and more accessible layout. {% endcomment %}
+                {% comment %}
+                {% if active_section != "all" %}
+                <article class="card stack-sm request-overview-preview-messages" aria-labelledby="coordinator-request-preview-messages-heading">
+                    <div class="feed-meta">
+                        <h2 id="coordinator-request-preview-messages-heading">Son mesajlar</h2>
+                        <a href="?section=messages">MesajlarÄ± aÃ§</a>
+                    </div>
+                    {% if messages_list %}
+                        <div class="stack-sm" role="list" aria-label="Son mesaj Ã¶nizlemeleri">
+                            {% for message in messages_list|slice:":2" %}
+                                <article class="feed-item" role="listitem">
+                                    <div class="feed-meta">
+                                        <strong>{{ message.author }}</strong>
+                                        <span>{{ message.created_at|date:"d.m.Y H:i" }}</span>
+                                    </div>
+                                    <p>{{ message.body|truncatechars:120 }}</p>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="muted">HenÃ¼z mesaj yok.</p>
+                    {% endif %}
+                </article>
+                <article class="card stack-sm request-overview-preview-materials" aria-labelledby="coordinator-request-preview-materials-heading">
+                    <div class="feed-meta">
+                        <h2 id="coordinator-request-preview-materials-heading">Son kaynak dosyalar</h2>
+                        <a href="?section=materials">Kaynak dosyaları aç</a>
+                    </div>
+                    {% if materials_list %}
+                        <div class="stack-sm" role="list" aria-label="Son kaynak dosya önizlemeleri">
+                            {% for material in materials_list|slice:":2" %}
+                                <article class="feed-item" role="listitem">
+                                    <div class="feed-meta">
+                                        <strong>{{ material.title }}</strong>
+                                        <span>{{ material.created_at|date:"d.m.Y H:i" }}</span>
+                                    </div>
+                                    <p>{{ material.description|default:"AÃ§Ä±klama yok."|truncatechars:120 }}</p>
+                                    <p class="muted">Dosya: {{ material.file.name|basename }}</p>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="muted">Henüz kaynak dosya yok.</p>
+                    {% endif %}
+                </article>
+                {% endif %}
+                {% endcomment %}
+            {% if request_item.status == "completed" or request_item.status == "cancelled" %}
+                <div class="note-card" role="status" aria-labelledby="coordinator-request-closed-title">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+                    <div>
+                        <strong id="coordinator-request-closed-title">Bu talep kapanmış durumda</strong>
+                        <p>Talep {{ request_item.get_status_display|lower }} olarak işaretlendi. Yönetim formları gizlendi; kayıt geçmişi diğer bölümlerde görüntülenebilir.</p>
+                    </div>
+                </div>
+            {% endif %}
+                </div>
+                {% if active_section != "all" %}
+                    <aside class="stack request-overview-aside" aria-label="Talep önizlemeleri">
+                        <article class="card stack-sm request-overview-preview-notes" aria-labelledby="coordinator-request-preview-notes-heading-side">
+                            <div class="feed-meta">
+                                <h2 id="coordinator-request-preview-notes-heading-side">Koordinasyon notları</h2>
+                                <a href="?section=notes">Notları aç</a>
+                            </div>
+                            {% if intervention_notes %}
+                                <div class="stack-sm" role="list" aria-label="Son koordinasyon notları önizlemeleri">
+                                    {% for note in intervention_notes|slice:":2" %}
+                                        <article class="feed-item" role="listitem">
+                                            <div class="feed-meta">
+                                                {% render_badge 'priority' note.priority note.get_priority_display %}
+                                                <span>{{ note.created_at|date:"d.m.Y H:i" }}</span>
+                                            </div>
+                                            <p>{{ note.body|truncatechars:120 }}</p>
+                                            <p class="muted">Yazan: {{ note.author }}</p>
+                                        </article>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="muted">Henüz koordinasyon notu yok.</p>
+                            {% endif %}
+                        </article>
+                        <article class="card stack-sm request-overview-preview-messages" aria-labelledby="coordinator-request-preview-messages-heading-side">
+                            <div class="feed-meta">
+                                <h2 id="coordinator-request-preview-messages-heading-side">Son mesajlar</h2>
+                                <a href="?section=messages">Mesajları aç</a>
+                            </div>
+                            {% if messages_list %}
+                                <div class="stack-sm" role="list" aria-label="Son mesaj önizlemeleri">
+                                    {% for message in messages_list|slice:":2" %}
+                                        <article class="feed-item" role="listitem">
+                                            <div class="feed-meta">
+                                                <strong>{{ message.author }}</strong>
+                                                <span>{{ message.created_at|date:"d.m.Y H:i" }}</span>
+                                            </div>
+                                            <p>{{ message.body|truncatechars:120 }}</p>
+                                        </article>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="muted">Henüz mesaj yok.</p>
+                            {% endif %}
+                        </article>
+                        <article class="card stack-sm request-overview-preview-materials" aria-labelledby="coordinator-request-preview-materials-heading-side">
+                            <div class="feed-meta">
+                                <h2 id="coordinator-request-preview-materials-heading-side">Son kaynak dosyalar</h2>
+                                <a href="?section=materials">Kaynak dosyaları aç</a>
+                            </div>
+                            {% if materials_list %}
+                                <div class="stack-sm" role="list" aria-label="Son kaynak dosya önizlemeleri">
+                                    {% for material in materials_list|slice:":2" %}
+                                        <article class="feed-item" role="listitem">
+                                            <div class="feed-meta">
+                                                <strong>{{ material.title }}</strong>
+                                                <span>{{ material.created_at|date:"d.m.Y H:i" }}</span>
+                                            </div>
+                                            <p>{{ material.description|default:"Açıklama yok."|truncatechars:120 }}</p>
+                                            <p class="muted">Dosya: {{ material.file.name|basename }}</p>
+                                        </article>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="muted">Henüz kaynak dosya yok.</p>
+                            {% endif %}
+                        </article>
+                    </aside>
+                {% endif %}
+            </div>
+        {% endif %}
+        {% if active_section == "management" or active_section == "all" %}
+            {% if request_item.status != "completed" and request_item.status != "cancelled" %}
+                <div id="yonetim" class="stack section-anchor">
+                    <article class="card stack-sm" aria-labelledby="management-overview-heading">
+                        <h2 id="management-overview-heading" class="section-heading">
+                            <svg class="icon" aria-hidden="true"><use href="#icon-compass"></use></svg>
+                            Koordinasyon özeti
+                        </h2>
+                        <p class="section-note">Yönetim işlemlerine geçmeden önce bu kısa özet, talebin bağlamını ve en mantıklı işlem sırasını netleştirir.</p>
+                        <div class="metric-grid two" aria-label="Koordinasyon özeti">
+                            <article class="metric-card">
+                                <span class="metric-label">Talep sahibi</span>
+                                <span class="metric-value" style="font-size:1.15rem;">{{ request_item.created_by }}</span>
+                            </article>
+                            <article class="metric-card">
+                                <span class="metric-label">Atanan gönüllü</span>
+                                <span class="metric-value" style="font-size:1.15rem;">{{ request_item.assigned_volunteer|default:"Henüz atanmadı" }}</span>
+                            </article>
+                            <article class="metric-card">
+                                <span class="metric-label">Son tarih</span>
+                                <span class="metric-value" style="font-size:1.15rem;">{{ request_item.effective_deadline_display|default:"Belirtilmedi" }}</span>
+                            </article>
+                            <article class="metric-card">
+                                <span class="metric-label">Kalan süre</span>
+                                <span class="metric-value" style="font-size:1.15rem;">{{ request_item.remaining_time_display|default:"Belirtilmedi" }}</span>
+                            </article>
+                        </div>
+                        <div class="note-card" role="status" aria-labelledby="management-priority-note-title">
+                            <svg class="icon" aria-hidden="true"><use href="#icon-target"></use></svg>
+                            <div>
+                                <strong id="management-priority-note-title">Önerilen işlem sırası</strong>
+                                <p>
+                                    {% if not request_item.assigned_volunteer %}
+                                        Önce gönüllü ataması yapın, ardından koordinasyon önceliğini netleştirin ve son olarak durum bilgisini güncelleyin.
+                                    {% elif request_item.priority == "critical" %}
+                                        Bu talep zaten kritik öncelikte. Gönüllü ilerlemesini ve durum bilgisini düzenli doğrulamanız yeterlidir.
+                                    {% else %}
+                                        Öncelik ve durum alanlarını gözden geçirip talebin doğru aşamada kaldığını doğrulayın.
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </article>
+
+                    <div class="card-grid two">
+                        <article class="card stack-sm" aria-labelledby="assign-volunteer-heading">
+                            <h2 id="assign-volunteer-heading" class="section-heading">
+                                <svg class="icon" aria-hidden="true"><use href="#icon-user"></use></svg>
+                                Gönüllü ata
+                            </h2>
+                            <form method="post" action="{% url 'support:coordinator_request_assign' request_item.pk %}" novalidate>
+                                {% csrf_token %}
+                                {% include "includes/form_fields.html" with form=assignment_form %}
+                                <div class="form-actions">
+                                    <button type="submit">
+                                        <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+                                        Atamayı kaydet
+                                    </button>
+                                </div>
+                            </form>
+                        </article>
+                        <article class="card stack-sm" aria-labelledby="update-priority-heading">
+                            <h2 id="update-priority-heading" class="section-heading">
+                                <svg class="icon" aria-hidden="true"><use href="#icon-filter"></use></svg>
+                                Öncelik belirle
+                            </h2>
+                            <form method="post" action="{% url 'support:coordinator_request_priority' request_item.pk %}" novalidate>
+                                {% csrf_token %}
+                                {% include "includes/form_fields.html" with form=priority_form %}
+                                <div class="form-actions">
+                                    <button type="submit">
+                                        <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+                                        Önceliği kaydet
+                                    </button>
+                                </div>
+                            </form>
+                        </article>
+                        <article class="card stack-sm" aria-labelledby="update-status-heading">
+                            <h2 id="update-status-heading" class="section-heading">
+                                <svg class="icon" aria-hidden="true"><use href="#icon-filter"></use></svg>
+                                Durum güncelle
+                            </h2>
+                            <form method="post" action="{% url 'support:coordinator_request_status' request_item.pk %}">
+                                {% csrf_token %}
+                                <div class="field-group">
+                                    <label for="id_status">Yeni durum</label>
+                                    <select id="id_status" name="status">
+                                        {% for value, label in status_choices %}
+                                            <option value="{{ value }}"{% if request_item.status == value %} selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit">
+                                        <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+                                        Durumu kaydet
+                                    </button>
+                                </div>
+                            </form>
+                        </article>
+                    </div>
+                </div>
+            {% else %}
+                <div class="empty-state" role="status">
+                    <strong>Yönetim işlemleri kapandı</strong>
+                    <p class="muted">Talep kapanmış olduğu için atama, durum ve öncelik güncelleme formları artık gösterilmiyor.</p>
+                </div>
+            {% endif %}
+        {% endif %}
+        {% if active_section == "notes" or active_section == "all" %}
+            <div class="card-grid two">
+                {% if request_item.status != "completed" and request_item.status != "cancelled" %}
+                    <article id="notlar" class="card stack-sm section-anchor" aria-labelledby="add-note-heading">
+                        <h2 id="add-note-heading" class="section-heading">
+                            <svg class="icon" aria-hidden="true"><use href="#icon-chat"></use></svg>
+                            Koordinasyon notu ekle
+                        </h2>
+                        <form method="post" action="{% url 'support:coordinator_request_note_create' request_item.pk %}" novalidate>
+                            {% csrf_token %}
+                            {% include "includes/form_fields.html" with form=intervention_form %}
+                            <div class="form-actions">
+                                <button type="submit">
+                                    <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+                                    Notu kaydet
+                                </button>
+                            </div>
+                        </form>
+                    </article>
+                {% endif %}
+                <article class="card stack-sm" aria-labelledby="intervention-history-heading">
+                    <h2 id="intervention-history-heading" class="section-heading">
+                        <svg class="icon" aria-hidden="true"><use href="#icon-chat"></use></svg>
+                        Koordinasyon notları
+                    </h2>
+                    {% if intervention_notes %}
+                        <div class="timeline" role="list" aria-label="Koordinasyon notları">
+                            {% for note in intervention_notes %}
+                                <article class="timeline-item" role="listitem">
+                                    <div class="feed-meta">
+                                        <strong>{{ note.author }}</strong>
+                                        {% render_badge 'priority' note.priority note.get_priority_display %}
+                                        <span>{{ note.created_at|date:"d.m.Y H:i" }}</span>
+                                    </div>
+                                    <p>{{ note.body }}</p>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state" role="status">
+                            <strong>Henüz koordinasyon notu yok</strong>
+                            <p class="muted">Bu alana yalnızca koordinasyon ekibine yönelik iç notlar eklenir.</p>
+                        </div>
+                    {% endif %}
+                </article>
+            </div>
+        {% endif %}
+        {% if active_section == "history" or active_section == "all" %}
+            <article id="gecmis" class="card stack-sm section-anchor" aria-labelledby="activity-history-heading">
+                <h2 id="activity-history-heading" class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg>
+                    İşlem geçmişi
+                </h2>
+                <p class="section-note">Talep üzerinde yapılan yönetim ve iletişim adımlarını zaman sırasıyla takip edebilirsiniz.</p>
+                {% if activity_logs %}
+                    <div class="metric-grid two" aria-label="İşlem geçmişi özeti">
+                        <article class="metric-card">
+                            <span class="metric-label">Toplam işlem kaydı</span>
+                            <span class="metric-value">{{ activity_logs_count }}</span>
+                        </article>
+                        <article class="metric-card">
+                            <span class="metric-label">Son işlem zamanı</span>
+                            <span class="metric-value" style="font-size:1.1rem;">{{ activity_logs.0.created_at|date:"d.m.Y H:i" }}</span>
+                        </article>
+                    </div>
+                    <div class="timeline" role="list" aria-label="Talep işlem geçmişi">
+                        {% for entry in activity_logs %}
+                            <article class="timeline-item" role="listitem">
+                                <div class="feed-meta">
+                                    {% render_activity_badge entry.action_type entry.get_action_type_display %}
+                                    <span>{{ entry.created_at|date:"d.m.Y H:i" }}</span>
+                                </div>
+                                <p>{{ entry.description }}</p>
+                                <p class="muted">İşlemi yapan: {{ entry.actor|default:"Sistem" }}</p>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state" role="status">
+                        <strong>Henüz işlem geçmişi yok</strong>
+                        <p class="muted">Bu talep üzerinde yapılan yönetim aksiyonları burada listelenecek.</p>
+                    </div>
+                {% endif %}
+            </article>
+        {% endif %}
+        {% if active_section == "messages" or active_section == "all" %}
+            <article id="mesajlar" class="card stack-sm section-anchor" aria-labelledby="message-log-heading">
+                <h2 id="message-log-heading" class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-chat"></use></svg>
+                    Mesajlaşma kaydı
+                </h2>
+                {% if messages_list %}
+                    <div class="feed" role="list" aria-label="Mesaj kayıtları">
+                        {% for message in messages_list %}
+                            <article class="feed-item" role="listitem">
+                                <div class="feed-meta">
+                                    <strong>{{ message.author }}</strong>
+                                    <span>{{ message.created_at|date:"d.m.Y H:i" }}</span>
+                                </div>
+                                <p>{{ message.body }}</p>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state" role="status">
+                        <strong>Henüz mesaj yok</strong>
+                        <p class="muted">Bu talep için henüz kullanıcılar arasında bir görüşme başlamamış.</p>
+                    </div>
+                {% endif %}
+            </article>
+        {% endif %}
+        {% if active_section == "materials" or active_section == "all" %}
+            <article id="materyaller" class="card stack-sm section-anchor" aria-labelledby="material-log-heading">
+                <h2 id="material-log-heading" class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-upload"></use></svg>
+                    Kaynak dosyalar
+                </h2>
+                {% if materials_list %}
+                    <div class="feed" role="list" aria-label="Kaynak dosyalar">
+                        {% for material in materials_list %}
+                            <article class="feed-item" role="listitem">
+                                <div class="feed-meta">
+                                    <strong>{{ material.title }}</strong>
+                                    <span>{{ material.created_at|date:"d.m.Y H:i" }}</span>
+                                </div>
+                                <p>{{ material.description|default:"Açıklama yok." }}</p>
+                                <div class="file-meta">
+                                    <span>Dosya: {{ material.file.name|basename }}</span>
+                                    <span>Boyut: {{ material.file.size|filesizeformat }}</span>
+                                </div>
+                                <p><a href="{{ material.file.url }}">Dosyayı aç</a></p>
+                                <p class="muted">Yükleyen: {{ material.uploaded_by }}</p>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state" role="status">
+                        <strong>Henüz kaynak dosya yok</strong>
+                        <p class="muted">Bu talep için paylaşılmış bir dosya veya not bulunmuyor.</p>
+                    </div>
+                {% endif %}
+            </article>
+        {% endif %}
+    </section>
+{% endblock %}

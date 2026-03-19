@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+{% load ui_extras %}
+
+{% block title %}Talep Detayı | AURA{% endblock %}
+
+{% block content %}
+    <section class="panel stack{% if active_section == 'all' %} request-detail-panel-all{% endif %}" aria-labelledby="student-request-detail-title">
+        <div class="nav-row">
+            <a class="button button-secondary" href="{% url 'support:student_request_list' %}">
+                <svg class="icon" aria-hidden="true"><use href="#icon-arrow-left"></use></svg>
+                Taleplerime dön
+            </a>
+            <a class="button button-secondary" href="{% url 'dashboard:student' %}">
+                <svg class="icon" aria-hidden="true"><use href="#icon-home"></use></svg>
+                Panel
+            </a>
+        </div>
+
+        <div class="page-intro">
+            <p class="eyebrow">
+                <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                Talep detayı
+            </p>
+            <h1 id="student-request-detail-title">{{ request_item.title }}</h1>
+            <div class="feed-meta">
+                <span>{{ request_item.created_at|date:"d.m.Y H:i" }}</span>
+                {% render_badge 'status' request_item.status request_item.get_status_display %}
+                {% render_badge 'urgency' request_item.urgency request_item.get_urgency_display %}
+            </div>
+        </div>
+
+        <nav class="section-jump" aria-label="Talep bölümleri">
+            <a class="section-chip section-chip-all" href="?section=all"{% if active_section == "all" %} aria-current="page"{% endif %}>
+                <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                Tümü
+            </a>
+            <a class="section-chip" href="?section=overview"{% if active_section == "overview" %} aria-current="page"{% endif %}>
+                <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                Özet
+            </a>
+            <a class="section-chip" href="?section=materials" aria-label="Kaynak dosyalar: {{ materials_count }}"{% if active_section == "materials" %} aria-current="page"{% endif %}>
+                <svg class="icon" aria-hidden="true"><use href="#icon-upload"></use></svg>
+                Kaynak dosyalar
+                <span class="count-badge" aria-hidden="true">{{ materials_count }}</span>
+            </a>
+            <a class="section-chip" href="?section=messages" aria-label="Mesajlar: {{ messages_count }}"{% if active_section == "messages" %} aria-current="page"{% endif %}>
+                <svg class="icon" aria-hidden="true"><use href="#icon-chat"></use></svg>
+                Mesajlar
+                <span class="count-badge" aria-hidden="true">{{ messages_count }}</span>
+            </a>
+        </nav>
+
+        {% if active_section == "overview" or active_section == "all" %}
+            <div id="talep-ozeti" class="section-anchor request-overview-layout{% if active_section == 'overview' %} request-overview-layout-split{% endif %}">
+                <div class="stack request-overview-main">
+                <article class="card detail-list request-overview-summary" aria-labelledby="student-request-summary-heading">
+                    <h2 id="student-request-summary-heading" class="sr-only">Talep özeti</h2>
+                    <p><strong>Kategori:</strong> {{ request_item.get_category_display }}</p>
+                    <p><strong>Ders:</strong> {{ request_item.course_name }}</p>
+                    <p><strong>Konu:</strong> {{ request_item.topic }}</p>
+                    <p><strong>Gönüllü:</strong> {{ request_item.assigned_volunteer|default:"Henüz atanmadı" }}</p>
+                    <p><strong>İhtiyaç süresi:</strong> {{ request_item.requested_duration_display|default:"Belirtilmedi" }}</p>
+                    <p><strong>Son tarih:</strong> {{ request_item.effective_deadline_display|default:"Belirtilmedi" }}</p>
+                    <p><strong>Kalan süre:</strong> {{ request_item.remaining_time_display|default:"Belirtilmedi" }}</p>
+                    <p><strong>Uygun olduğunuz zamanlar:</strong> {{ request_item.preferred_timing|default:"Belirtilmedi" }}</p>
+                </article>
+                <article class="card stack-sm request-overview-description" aria-labelledby="student-request-description-heading">
+                    <h2 id="student-request-description-heading">İhtiyaç açıklaması</h2>
+                    <p class="section-note">Talebin özü ve çalışma beklentisi</p>
+                    <p>{{ request_item.description }}</p>
+                </article>
+                {% comment %} Overview preview cards moved to the side pane below for a cleaner and more accessible layout. {% endcomment %}
+                {% comment %}
+                {% if active_section != "all" %}
+                <article class="card stack-sm request-overview-preview-messages" aria-labelledby="student-request-preview-messages-heading">
+                    <div class="feed-meta">
+                        <h2 id="student-request-preview-messages-heading">Son mesajlar</h2>
+                        <a href="?section=messages">MesajlarÄ± aÃ§</a>
+                    </div>
+                    {% if messages_list %}
+                        <div class="stack-sm" role="list" aria-label="Son mesaj Ã¶nizlemeleri">
+                            {% for message in messages_list|slice:":2" %}
+                                <article class="feed-item" role="listitem">
+                                    <div class="feed-meta">
+                                        <strong>{{ message.author }}</strong>
+                                        <span>{{ message.created_at|date:"d.m.Y H:i" }}</span>
+                                    </div>
+                                    <p>{{ message.body|truncatechars:120 }}</p>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="muted">HenÃ¼z mesaj yok.</p>
+                    {% endif %}
+                </article>
+                <article class="card stack-sm request-overview-preview-materials" aria-labelledby="student-request-preview-materials-heading">
+                    <div class="feed-meta">
+                        <h2 id="student-request-preview-materials-heading">Son kaynak dosyalar</h2>
+                        <a href="?section=materials">Kaynak dosyalarÄ± aÃ§</a>
+                    </div>
+                    {% if materials_list %}
+                        <div class="stack-sm" role="list" aria-label="Son kaynak dosya Ã¶nizlemeleri">
+                            {% for material in materials_list|slice:":2" %}
+                                <article class="feed-item" role="listitem">
+                                    <div class="feed-meta">
+                                        <strong>{{ material.title }}</strong>
+                                        <span>{{ material.created_at|date:"d.m.Y H:i" }}</span>
+                                    </div>
+                                    <p>{{ material.description|default:"AÃ§Ä±klama yok."|truncatechars:120 }}</p>
+                                    <p class="muted">Dosya: {{ material.file.name|basename }}</p>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="muted">HenÃ¼z kaynak dosya yok.</p>
+                    {% endif %}
+                </article>
+                {% endif %}
+                {% endcomment %}
+            {% if not request_item.assigned_volunteer %}
+                <div class="note-card request-overview-followup" role="status" aria-labelledby="student-request-waiting-title">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg>
+                    <div>
+                        <strong id="student-request-waiting-title">Eşleşme bekleniyor</strong>
+                        <p>Gönüllü atandığında burada görünür ve mesajlaşma akışı daha anlamlı hâle gelir.</p>
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if request_item.status == "completed" or request_item.status == "cancelled" %}
+                <div class="note-card request-overview-followup" role="status" aria-labelledby="student-request-closed-title">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+                    <div>
+                        <strong id="student-request-closed-title">Bu talep artık kapalı</strong>
+                        <p>Talep {{ request_item.get_status_display|lower }} durumunda. Mesajlaşma ve materyal alanları geçmiş kayıt olarak görünür.</p>
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if request_item.status != "completed" and request_item.status != "cancelled" %}
+                <div class="card stack-sm request-overview-followup">
+                    <h2 class="section-heading">
+                        <svg class="icon" aria-hidden="true"><use href="#icon-filter"></use></svg>
+                        Durum güncelle
+                    </h2>
+                    <p class="section-note">Talep tamamlandıysa ya da artık geçerli değilse buradan işaretleyebilirsiniz.</p>
+                    <form method="post" action="{% url 'support:student_request_status' request_item.pk %}">
+                        {% csrf_token %}
+                        <div class="action-row">
+                            <button type="submit" name="status" value="completed">
+                                <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+                                Tamamlandı
+                            </button>
+                            <button type="submit" name="status" value="cancelled" class="button-danger">
+                                İptal et
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            {% endif %}
+                </div>
+                {% if active_section != "all" %}
+                    <aside class="stack request-overview-aside" aria-label="Talep önizlemeleri">
+                        <article class="card stack-sm request-overview-preview-messages" aria-labelledby="student-request-preview-messages-heading-side">
+                            <div class="feed-meta">
+                                <h2 id="student-request-preview-messages-heading-side">Son mesajlar</h2>
+                                <a href="?section=messages">Mesajları aç</a>
+                            </div>
+                            {% if messages_list %}
+                                <div class="stack-sm" role="list" aria-label="Son mesaj önizlemeleri">
+                                    {% for message in messages_list|slice:":2" %}
+                                        <article class="feed-item" role="listitem">
+                                            <div class="feed-meta">
+                                                <strong>{{ message.author }}</strong>
+                                                <span>{{ message.created_at|date:"d.m.Y H:i" }}</span>
+                                            </div>
+                                            <p>{{ message.body|truncatechars:120 }}</p>
+                                        </article>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="muted">Henüz mesaj yok.</p>
+                            {% endif %}
+                        </article>
+                        <article class="card stack-sm request-overview-preview-materials" aria-labelledby="student-request-preview-materials-heading-side">
+                            <div class="feed-meta">
+                                <h2 id="student-request-preview-materials-heading-side">Son kaynak dosyalar</h2>
+                                <a href="?section=materials">Kaynak dosyaları aç</a>
+                            </div>
+                            {% if materials_list %}
+                                <div class="stack-sm" role="list" aria-label="Son kaynak dosya önizlemeleri">
+                                    {% for material in materials_list|slice:":2" %}
+                                        <article class="feed-item" role="listitem">
+                                            <div class="feed-meta">
+                                                <strong>{{ material.title }}</strong>
+                                                <span>{{ material.created_at|date:"d.m.Y H:i" }}</span>
+                                            </div>
+                                            <p>{{ material.description|default:"Açıklama yok."|truncatechars:120 }}</p>
+                                            <p class="muted">Dosya: {{ material.file.name|basename }}</p>
+                                        </article>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="muted">Henüz kaynak dosya yok.</p>
+                            {% endif %}
+                        </article>
+                    </aside>
+                {% endif %}
+            </div>
+        {% endif %}
+        {% if active_section == "messages" or active_section == "all" %}
+            <article id="mesajlar" class="card stack-sm section-anchor">
+                <h2 class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-chat"></use></svg>
+                    Mesajlaşma
+                </h2>
+                <p class="section-note">Çalışma planı, saat ve kısa güncellemeleri burada paylaşın.</p>
+                {% if messages_list %}
+                    <div class="feed" role="list" aria-label="Mesajlar" aria-live="polite">
+                        {% for message in messages_list %}
+                            <article class="feed-item {% if message.author == user %}feed-item-self{% endif %}" role="listitem">
+                                <div class="feed-meta">
+                                    <strong>{{ message.author }}</strong>
+                                    <span>{{ message.created_at|date:"d.m.Y H:i" }}</span>
+                                </div>
+                                <p>{{ message.body }}</p>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state" role="status">
+                        <strong>Henüz mesaj yok</strong>
+                        <p class="muted">Eşleşen kişiyle çalışma detaylarını burada netleştirebilirsiniz.</p>
+                    </div>
+                {% endif %}
+
+                <form method="post" action="{% url 'support:student_request_message_create' request_item.pk %}" novalidate aria-describedby="student-message-help">
+                    {% csrf_token %}
+                    <p id="student-message-help" class="field-help">Mesaj gönderildikten sonra bu bölümün üstünde hemen görünür.</p>
+                    {% include "includes/form_fields.html" with form=message_form %}
+                    <div class="form-actions">
+                        <button type="submit">
+                            <svg class="icon" aria-hidden="true"><use href="#icon-chat"></use></svg>
+                            Mesaj gönder
+                        </button>
+                    </div>
+                </form>
+            </article>
+        {% endif %}
+        {% if active_section == "materials" or active_section == "all" %}
+            <article id="materyaller" class="card stack-sm section-anchor">
+                <h2 class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-upload"></use></svg>
+                    Kaynak dosyalar
+                </h2>
+                <p class="section-note">Gönüllünün incelemesini istediğiniz ders notu, PDF, slayt veya görselleri burada paylaşabilirsiniz.</p>
+                {% if materials_list %}
+                    <div class="feed" role="list" aria-label="Paylaşılan materyaller">
+                        {% for material in materials_list %}
+                            <article class="feed-item" role="listitem">
+                                <div class="feed-meta">
+                                    <strong>{{ material.title }}</strong>
+                                    <span>{{ material.created_at|date:"d.m.Y H:i" }}</span>
+                                </div>
+                                <p>{{ material.description|default:"Açıklama yok." }}</p>
+                                <div class="file-meta">
+                                    <span>Dosya: {{ material.file.name|basename }}</span>
+                                    <span>Boyut: {{ material.file.size|filesizeformat }}</span>
+                                </div>
+                                <p><a href="{{ material.file.url }}">Dosyayı aç</a></p>
+                                <p class="muted">Yükleyen: {{ material.uploaded_by }}</p>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state" role="status">
+                        <strong>Henüz kaynak dosya yok</strong>
+                        <p class="muted">Gönüllünün incelemesini istediğiniz ders notu, PDF, slayt veya fotoğrafları burada paylaşabilirsiniz.</p>
+                    </div>
+                {% endif %}
+
+                <form method="post" action="{% url 'support:student_request_material_create' request_item.pk %}" enctype="multipart/form-data" novalidate aria-describedby="student-material-help">
+                    {% csrf_token %}
+                    <p id="student-material-help" class="field-help">Kısa başlık ve not eklemek, gönüllünün dosyayı açmadan önce içeriği anlamasına yardımcı olur.</p>
+                    {% include "includes/form_fields.html" with form=material_form %}
+                    <div class="form-actions">
+                        <button type="submit">
+                            <svg class="icon" aria-hidden="true"><use href="#icon-upload"></use></svg>
+                            Dosyayı ekle
+                        </button>
+                    </div>
+                </form>
+            </article>
+        {% endif %}
+    </section>
+{% endblock %}

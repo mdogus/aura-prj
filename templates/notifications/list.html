@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% load ui_extras %}
+
+{% block title %}Bildirimler | AURA{% endblock %}
+
+{% block content %}
+    <section class="panel stack" aria-labelledby="notifications-title">
+        <div class="nav-row">
+            <a class="button button-secondary" href="{% url 'dashboard:home' %}">
+                <svg class="icon" aria-hidden="true"><use href="#icon-arrow-left"></use></svg>
+                Panele dön
+            </a>
+            <a class="button button-secondary" href="{% url 'notifications:list' %}">
+                <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                Tüm bildirimler
+            </a>
+            <a class="button button-secondary" href="{% url 'notifications:list' %}?filter=unread">
+                <svg class="icon" aria-hidden="true"><use href="#icon-filter"></use></svg>
+                Sadece okunmayanlar
+            </a>
+        </div>
+
+        <div class="page-intro">
+            <p class="eyebrow">
+                <svg class="icon" aria-hidden="true"><use href="#icon-bell"></use></svg>
+                Bildirim merkezi
+            </p>
+            <h1 id="notifications-title">Bildirimler</h1>
+            <p class="muted">Talep sürecindeki temel olaylar burada listelenir. Okunmamış bildirimler üstte görünür.</p>
+        </div>
+
+        <nav class="section-jump" aria-label="Bildirim filtreleri">
+            <a class="section-chip" href="{% url 'notifications:list' %}" {% if selected_filter == "all" %}aria-current="page"{% endif %}>
+                <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                Tümü
+            </a>
+            <a class="section-chip" href="{% url 'notifications:list' %}?filter=unread" {% if selected_filter == "unread" %}aria-current="page"{% endif %}>
+                <svg class="icon" aria-hidden="true"><use href="#icon-filter"></use></svg>
+                Okunmayanlar
+            </a>
+        </nav>
+
+        <div class="card-grid two">
+            <article class="card stack-sm" aria-labelledby="notification-summary-heading">
+                <h2 id="notification-summary-heading" class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-bell"></use></svg>
+                    Bildirim özeti
+                </h2>
+                <p aria-live="polite"><strong>Toplam bildirim:</strong> {{ total_notification_count }}</p>
+                <p aria-live="polite"><strong>Okunmamış bildirim:</strong> {{ unread_notification_total }}</p>
+                <p class="muted">
+                    {% if selected_filter == "unread" %}
+                        Şu anda yalnızca okunmamış bildirimleri görüntülüyorsunuz.
+                    {% else %}
+                        Şu anda tüm bildirimleri görüntülüyorsunuz.
+                    {% endif %}
+                </p>
+            </article>
+
+            <article class="card stack-sm" aria-labelledby="notification-actions-heading">
+                <h2 id="notification-actions-heading" class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+                    Hızlı işlem
+                </h2>
+                <p class="section-note">Tüm okunmamış bildirimleri tek işlemle okundu durumuna getirebilirsiniz.</p>
+                <form method="post" action="{% url 'notifications:mark_all_read' %}">
+                    {% csrf_token %}
+                    <div class="form-actions">
+                        <button type="submit">
+                            <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+                            Tümünü okundu işaretle
+                        </button>
+                    </div>
+                </form>
+            </article>
+        </div>
+
+        <div aria-live="polite" aria-atomic="true">
+            {% if notifications %}
+                <div class="feed" role="list" aria-label="Bildirim listesi">
+                    {% for notification in notifications %}
+                        <article class="feed-item notification-card {% if not notification.is_read %}feed-item-highlight{% endif %}" role="listitem">
+                            <div class="notification-heading">
+                                <h2 class="notification-title">
+                                    <svg class="icon" aria-hidden="true"><use href="#{{ notification.notification_icon }}"></use></svg>
+                                    <span>{{ notification.title }}</span>
+                                </h2>
+                            </div>
+                            {% if notification.body %}
+                                <p class="notification-body">{{ notification.body }}</p>
+                            {% endif %}
+                            <div class="feed-meta notification-meta">
+                                <span class="notification-type" aria-label="Bildirim türü: {{ notification.notification_type_label }}">
+                                    <svg class="icon" aria-hidden="true"><use href="#{{ notification.notification_icon }}"></use></svg>
+                                    <span>{{ notification.notification_type_label }}</span>
+                                </span>
+                                <span>{{ notification.created_at|date:"d.m.Y H:i" }}</span>
+                                <span class="{{ notification.is_read|notification_badge_class }}">
+                                    {% if notification.is_read %}Okundu{% else %}Okunmadı{% endif %}
+                                </span>
+                            </div>
+                            <div class="action-row notification-actions">
+                                <a class="button button-secondary" href="{% url 'notifications:open' notification.pk %}">
+                                    <svg class="icon" aria-hidden="true"><use href="#icon-arrow-left"></use></svg>
+                                    {% if notification.target_url %}İlgili kayda git{% else %}Bildirimi aç{% endif %}
+                                </a>
+                                {% if not notification.is_read %}
+                                    <form method="post" action="{% url 'notifications:mark_read' notification.pk %}{% if selected_filter == 'unread' %}?filter=unread{% endif %}">
+                                        {% csrf_token %}
+                                        <div class="form-actions">
+                                            <button type="submit" class="button-secondary">
+                                                <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+                                                Okundu işaretle
+                                            </button>
+                                        </div>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state" role="status">
+                    {% if selected_filter == "unread" %}
+                        <strong>Okunmamış bildirim yok</strong>
+                        <p class="muted">Tüm bildirimleri okumuş görünüyorsunuz. İsterseniz tüm bildirimlere dönebilirsiniz.</p>
+                    {% else %}
+                        <strong>Gösterilecek bildirim yok</strong>
+                        <p class="muted">Yeni olaylar gerçekleştiğinde bildirimler burada listelenecek.</p>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}

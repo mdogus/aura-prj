@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load ui_extras %}
+
+{% block title %}Açık Talepler | AURA{% endblock %}
+
+{% block content %}
+    <section class="panel stack" aria-labelledby="volunteer-open-list-title">
+        <div class="nav-row">
+            <a class="button button-secondary" href="{% url 'dashboard:volunteer' %}">
+                <svg class="icon" aria-hidden="true"><use href="#icon-arrow-left"></use></svg>
+                Panele dön
+            </a>
+            <a class="button button-secondary" href="{% url 'support:volunteer_active_support_list' %}">
+                <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+                Aktif desteklerim
+            </a>
+        </div>
+
+        <div class="page-intro">
+            <p class="eyebrow">
+                <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                Açık talepler
+            </p>
+            <h1 id="volunteer-open-list-title">Açık destek talepleri</h1>
+            <p class="muted">Henüz gönüllü atanmamış ve üstlenmeye açık talepler burada listelenir.</p>
+        </div>
+
+        {% if requests %}
+            <div class="feed" role="list" aria-label="Açık destek talepleri">
+                {% for request_item in requests %}
+                    <article class="feed-item" role="listitem">
+                        <h2 class="request-link-title">
+                            <a class="request-link" href="{% url 'support:volunteer_request_detail' request_item.pk %}">
+                                <span class="icon-wrap" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#icon-file"></use></svg></span>
+                                <span class="request-link-text">{{ request_item.title }}</span>
+                            </a>
+                        </h2>
+                        <div class="feed-meta">
+                            {% render_badge 'urgency' request_item.urgency request_item.get_urgency_display %}
+                            {% render_badge 'category' request_item.category request_item.get_category_display %}
+                        </div>
+                        <p><strong>Ders:</strong> {{ request_item.course_name }}</p>
+                        <p><strong>Konu:</strong> {{ request_item.topic }}</p>
+                        <p><strong>Talep sahibi:</strong> {{ request_item.created_by }}</p>
+                        {% if request_item.timing_summary %}
+                            <p><strong>İhtiyaç süresi:</strong> {{ request_item.timing_summary }}</p>
+                        {% endif %}
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state" role="status">
+                <strong>Şu anda üstlenilebilecek açık talep yok</strong>
+                <p class="muted">Yeni talepler açıldığında burada otomatik olarak listelenecek. Bir süre sonra tekrar kontrol edebilirsiniz.</p>
+            </div>
+        {% endif %}
+    </section>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Bir Sorun Oluştu | AURA{% endblock %}
+
+{% block content %}
+    <section class="panel stack" aria-labelledby="server-error-title">
+        <div class="page-intro">
+            <p class="eyebrow">
+                <svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg>
+                Geçici sorun
+            </p>
+            <h1 id="server-error-title">İşlem şu anda tamamlanamadı</h1>
+            <p class="muted">Beklenmeyen bir sorun oluştu. Birkaç dakika sonra tekrar deneyebilir veya ana sayfaya dönebilirsiniz.</p>
+        </div>
+
+        <div class="action-row">
+            <a class="button" href="{% url 'home' %}">
+                <svg class="icon" aria-hidden="true"><use href="#icon-home"></use></svg>
+                Ana sayfa
+            </a>
+        </div>
+    </section>
+{% endblock %}

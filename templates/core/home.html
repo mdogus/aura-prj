@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}AURA | Faz 1{% endblock %}
+
+{% block content %}
+    <section class="panel hero panel-soft" aria-labelledby="home-title">
+        <div class="stack">
+            <p class="eyebrow">
+                Erişilebilir ve Kapsayıcı Sosyal Destek Ağı
+            </p>
+            <div class="page-intro">
+                <h1 id="home-title">Akademik ve sosyal yaşamı hep birlikte daha erişilebilir ve kapsayıcı kılalım!</h1>
+                <p class="muted">
+                    AURA, Anadolu Üniversitesinde görme engelli öğrenciler ile gönüllü öğrenciler
+                    arasında etkileşimi güçlendiren; koordinatör ve akademik danışman desteğiyle
+                    sürdürülebilir sosyal destek ağı kurmayı amaçlayan erişilebilir bir platformdur.
+                </p>
+            </div>
+        </div>
+
+        <div class="cta-row" aria-label="Ana işlemler">
+            {% if user.is_authenticated %}
+                <a class="button" href="{% url 'dashboard:home' %}">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-home"></use></svg>
+                    Panele git
+                </a>
+            {% else %}
+                <a class="button" href="{% url 'users:signup' %}">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>
+                    Kayıt ol
+                </a>
+                <a class="button button-secondary" href="{% url 'login' %}">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-user"></use></svg>
+                    Giriş yap
+                </a>
+            {% endif %}
+        </div>
+
+        <div class="card-grid two" aria-label="Vizyon ve misyon">
+            <article class="card stack-sm">
+                <h2 class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-compass"></use></svg>
+                    Vizyonumuz
+                </h2>
+                <p>
+                    Anadolu Üniversitesinde görme engelli öğrenciler ile gönüllü öğrenciler arasında
+                    etkileşimi ve sosyal katılımı güçlendiren; güven ve etik ilkelere dayalı,
+                    erişilebilir, kapsayıcı ve sürdürülebilir sosyal destek ağı oluşturmak.
+                </p>
+            </article>
+            <article class="card stack-sm">
+                <h2 class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-shield"></use></svg>
+                    Misyonumuz
+                </h2>
+                <p>
+                    Üniversite topluluğu içinde karşılıklı etkileşimi, sosyal katılımı ve ortak sorumluluğu
+                    güçlendiren; görme engelli öğrenciler, gönüllü öğrenciler, koordinatörler ve akademik
+                    danışmanlar arasında erişilebilir, güvenli ve etik ilkelere dayalı bir dayanışma zemini kurmak.
+                </p>
+            </article>
+        </div>
+    </section>
+{% endblock %}

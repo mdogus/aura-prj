@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Kayıt Ol | AURA{% endblock %}
+
+{% block content %}
+    <section class="panel stack" aria-labelledby="signup-title">
+        <div class="page-intro">
+            <p class="eyebrow">
+                <svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>
+                Yeni hesap
+            </p>
+            <h1 id="signup-title">Kayıt ol</h1>
+            <p class="muted">Rolünüzü seçin, hesabınızı oluşturun ve destek akışına katılın.</p>
+        </div>
+
+        <div class="note-card" role="note" aria-labelledby="signup-note-title">
+            <svg class="icon" aria-hidden="true"><use href="#icon-cap"></use></svg>
+            <div>
+                <strong id="signup-note-title">Doğru rolü seçin</strong>
+                <p>Seçtiğiniz rol, göreceğiniz ekranları ve kullanabileceğiniz akışları belirler.</p>
+            </div>
+        </div>
+
+        <form method="post" novalidate aria-describedby="signup-help">
+            {% csrf_token %}
+            <p id="signup-help" class="field-help">Bilgilerinizi tamamladıktan sonra profil kurulumuna yönlendirilirsiniz.</p>
+            {% include "includes/form_fields.html" with form=form %}
+            <div class="form-actions">
+                <button type="submit">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+                    Hesap oluştur
+                </button>
+            </div>
+        </form>
+    </section>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load ui_extras %}
+
+{% block title %}Profil Tamamlama | AURA{% endblock %}
+
+{% block content %}
+    <section class="panel stack" aria-labelledby="profile-onboarding-title">
+        <div class="page-intro">
+            <p class="eyebrow">
+                <svg class="icon" aria-hidden="true"><use href="#icon-user"></use></svg>
+                Profil kurulumu
+            </p>
+            <h1 id="profile-onboarding-title">Profilini tamamla</h1>
+            <p class="muted">Bu adım, doğru panel yönlendirmesini yapmak ve destek sürecinde ihtiyaç duyulan temel bilgileri toplamak için kullanılır.</p>
+        </div>
+
+        <div class="card">
+            <div class="detail-row">
+                <strong>Rol:</strong>
+                {% render_badge 'role' user.role user.get_role_display %}
+            </div>
+        </div>
+
+        <form method="post" novalidate aria-describedby="profile-help">
+            {% csrf_token %}
+            <p id="profile-help" class="field-help">Bu bilgiler eşleşme ve iletişim akışını kolaylaştırmak için kullanılır.</p>
+            {% include "includes/form_fields.html" with form=form %}
+            <div class="form-actions">
+                <button type="submit">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+                    Profili kaydet
+                </button>
+            </div>
+        </form>
+    </section>
+{% endblock %}

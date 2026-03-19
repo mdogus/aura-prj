@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% load ui_extras %}
+
+{% block title %}Kullanıcı Yönetimi | AURA{% endblock %}
+
+{% block content %}
+    <section class="panel stack" aria-labelledby="user-list-title">
+        <div class="nav-row">
+            <a class="button button-secondary" href="{% url 'dashboard:coordinator' %}">
+                <svg class="icon" aria-hidden="true"><use href="#icon-arrow-left"></use></svg>
+                Koordinatör paneli
+            </a>
+        </div>
+
+        <div class="page-intro">
+            <p class="eyebrow">
+                <svg class="icon" aria-hidden="true"><use href="#icon-user"></use></svg>
+                Kullanıcı operasyonları
+            </p>
+            <h1 id="user-list-title">Kullanıcı yönetimi</h1>
+            <p class="muted">Rol, aktiflik ve profil durumu filtreleriyle kullanıcıları daha hızlı ayırabilirsiniz.</p>
+        </div>
+
+        <div class="metric-grid two" aria-label="Kullanıcı listesi özeti">
+            <article class="metric-card">
+                <span class="metric-label">Listelenen kullanıcı</span>
+                <span class="metric-value">{{ result_count }}</span>
+            </article>
+            <article class="metric-card">
+                <span class="metric-label">Aktif kullanıcı</span>
+                <span class="metric-value">{{ active_result_count }}</span>
+            </article>
+            <article class="metric-card">
+                <span class="metric-label">Pasif kullanıcı</span>
+                <span class="metric-value">{{ inactive_result_count }}</span>
+            </article>
+            <article class="metric-card">
+                <span class="metric-label">Profili eksik</span>
+                <span class="metric-value">{{ incomplete_profile_count }}</span>
+            </article>
+        </div>
+
+        <div class="section-jump" aria-label="Hızlı kullanıcı filtreleri">
+            <a class="section-chip" href="{% url 'users:coordinator_user_list' %}?active=inactive">Pasif kullanıcılar</a>
+            <a class="section-chip" href="{% url 'users:coordinator_user_list' %}?profile=incomplete">Profili eksik olanlar</a>
+            <a class="section-chip" href="{% url 'users:coordinator_user_list' %}?role=volunteer_student">Gönüllüler</a>
+            <a class="section-chip" href="{% url 'users:coordinator_user_list' %}?role=visually_impaired_student">Görme engelli öğrenciler</a>
+        </div>
+
+        <form method="get" class="filter-form three" aria-label="Kullanıcı filtreleri">
+            <div class="field-group">
+                <label for="id_q">Ara</label>
+                <input id="id_q" type="text" name="q" value="{{ search_query }}" placeholder="Ad, kullanıcı adı veya e-posta">
+            </div>
+            <div class="field-group">
+                <label for="id_role">Rol</label>
+                <select id="id_role" name="role">
+                    <option value="">Tüm roller</option>
+                    {% for value, label in role_choices %}
+                        <option value="{{ value }}"{% if selected_role == value %} selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field-group">
+                <label for="id_active">Aktiflik</label>
+                <select id="id_active" name="active">
+                    <option value="">Tümü</option>
+                    <option value="active"{% if selected_active == "active" %} selected{% endif %}>Aktif</option>
+                    <option value="inactive"{% if selected_active == "inactive" %} selected{% endif %}>Pasif</option>
+                </select>
+            </div>
+            <div class="field-group">
+                <label for="id_profile">Profil durumu</label>
+                <select id="id_profile" name="profile">
+                    <option value="">Tümü</option>
+                    <option value="completed"{% if selected_profile == "completed" %} selected{% endif %}>Tamamlanmış</option>
+                    <option value="incomplete"{% if selected_profile == "incomplete" %} selected{% endif %}>Eksik</option>
+                </select>
+            </div>
+            <div class="form-actions">
+                <button type="submit">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-filter"></use></svg>
+                    Filtrele
+                </button>
+                <a class="button button-secondary" href="{% url 'users:coordinator_user_list' %}">Filtreleri temizle</a>
+            </div>
+        </form>
+
+        {% if users %}
+            <div class="feed" role="list" aria-label="Kullanıcı listesi">
+                {% for item in users %}
+                    <article class="feed-item" role="listitem">
+                        <h2><a href="{% url 'users:coordinator_user_detail' item.pk %}">{{ item }}</a></h2>
+                        <div class="feed-meta">
+                            {% render_badge 'role' item.role item.get_role_display %}
+                            {% if item.is_active %}
+                                {% render_badge 'user_state' 'active' 'Aktif' %}
+                            {% else %}
+                                {% render_badge 'user_state' 'inactive' 'Pasif' %}
+                            {% endif %}
+                            {% if item.profile_completed %}
+                                {% render_badge 'profile_state' 'completed' 'Profil tamamlandı' %}
+                            {% else %}
+                                {% render_badge 'profile_state' 'incomplete' 'Profil eksik' %}
+                            {% endif %}
+                        </div>
+                        <p><strong>Kullanıcı adı:</strong> {{ item.username }}</p>
+                        <p><strong>E-posta:</strong> {{ item.email }}</p>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state" role="status">
+                <strong>Kullanıcı bulunamadı</strong>
+                <p class="muted">Filtreleri temizleyip tekrar deneyebilirsiniz.</p>
+            </div>
+        {% endif %}
+    </section>
+{% endblock %}

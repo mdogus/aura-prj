@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load ui_extras %}
+
+{% block title %}Akademik Danışman Paneli | AURA{% endblock %}
+
+{% block content %}
+    <section class="panel stack" aria-labelledby="advisor-dashboard-title">
+        <div class="page-intro">
+            <p class="eyebrow">
+                <svg class="icon" aria-hidden="true"><use href="#icon-home"></use></svg>
+                Danışman görünümü
+            </p>
+            <h1 id="advisor-dashboard-title">Akademik danışman paneli</h1>
+            <p class="muted">Akademik destek ağırlıklı talepleri inceleyebilir, eşleşme sürecini izleyebilir ve öğrencilere rehberlik edebilirsiniz.</p>
+        </div>
+
+        <div class="card-grid two">
+            <article class="card stack-sm">
+                <h2 class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                    Talep özeti
+                </h2>
+                <p><strong>Toplam talep:</strong> {{ total_request_count }}</p>
+                <p><strong>Akademik odaklı talep:</strong> {{ academic_request_count }}</p>
+                <div class="action-row">
+                    <a class="button button-secondary" href="{% url 'support:coordinator_request_list' %}">
+                        <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                        Tüm talepleri görüntüle
+                    </a>
+                </div>
+            </article>
+            <article class="card stack-sm">
+                <h2 class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-filter"></use></svg>
+                    Rol odağı
+                </h2>
+                <p>Ders, materyal ve çalışma desteği taleplerinde yönlendirici rol üstlenebilirsiniz.</p>
+            </article>
+        </div>
+
+        <div class="card stack-sm">
+            <h2 class="section-heading">
+                <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                Son açılan talepler
+            </h2>
+            {% if recent_requests %}
+                <div class="feed" role="list" aria-label="Son açılan talepler">
+                        {% for request_item in recent_requests %}
+                            <article class="feed-item" role="listitem">
+                                <h2 class="request-link-title">
+                                    <a class="request-link" href="{% url 'support:coordinator_request_detail' request_item.pk %}">
+                                        <span class="icon-wrap" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#icon-file"></use></svg></span>
+                                        <span class="request-link-text">{{ request_item.title }}</span>
+                                    </a>
+                                </h2>
+                                <div class="feed-meta">
+                                    {% render_badge 'status' request_item.status request_item.get_status_display %}
+                                    {% render_badge 'category' request_item.category request_item.get_category_display %}
+                                </div>
+                            </article>
+                        {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state" role="status">
+                    <strong>Henüz açılmış talep yok</strong>
+                    <p class="muted">Yeni talepler geldiğinde burada görüntülenecek.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="card stack-sm">
+            <h2 class="section-heading">
+                <svg class="icon" aria-hidden="true"><use href="#icon-bell"></use></svg>
+                Son bildirimler
+            </h2>
+            {% if recent_notifications %}
+                <div class="feed" role="list" aria-label="Son bildirimler">
+                    {% for notification in recent_notifications %}
+                        <article class="feed-item" role="listitem">
+                            <p><strong>{{ notification.title }}</strong></p>
+                            <p class="muted">{{ notification.body|default:"Açıklama bulunmuyor." }}</p>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state" role="status">
+                    <strong>Henüz bildirim yok</strong>
+                    <p class="muted">İlgili süreç bildirimleri burada görünür.</p>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}

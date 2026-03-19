@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Erişim Kısıtlı | AURA{% endblock %}
+
+{% block content %}
+    <section class="panel stack" aria-labelledby="permission-title">
+        <div class="page-intro">
+            <p class="eyebrow">
+                <svg class="icon" aria-hidden="true"><use href="#icon-filter"></use></svg>
+                Erişim kısıtlı
+            </p>
+            <h1 id="permission-title">Bu sayfaya erişim izniniz yok</h1>
+            <p class="muted">Bu alan yalnızca ilgili role sahip kullanıcılar için açıktır. İsterseniz kendi panelinize dönebilir veya ana sayfaya geçebilirsiniz.</p>
+        </div>
+
+        <div class="card stack-sm">
+            <h2 class="section-heading">
+                <svg class="icon" aria-hidden="true"><use href="#icon-user"></use></svg>
+                Ne yapabilirsiniz?
+            </h2>
+            <p>Kendi rolünüze uygun ekrana dönün ya da erişim ihtiyacı varsa koordinasyon ekibiyle iletişime geçin.</p>
+            <div class="action-row">
+                <a class="button" href="{% url 'dashboard:home' %}">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-home"></use></svg>
+                    Panelime dön
+                </a>
+                <a class="button button-secondary" href="{% url 'home' %}">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-arrow-left"></use></svg>
+                    Ana sayfa
+                </a>
+            </div>
+        </div>
+    </section>
+{% endblock %}

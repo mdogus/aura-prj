@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+{% load ui_extras %}
+
+{% block title %}Koordinatör Paneli | AURA{% endblock %}
+
+{% block content %}
+    <section class="panel stack" aria-labelledby="coordinator-dashboard-title">
+        <div class="page-intro">
+            <p class="eyebrow">
+                <svg class="icon" aria-hidden="true"><use href="#icon-home"></use></svg>
+                Koordinatör görünümü
+            </p>
+            <h1 id="coordinator-dashboard-title">Koordinatör paneli</h1>
+            <p class="muted">Öğrencilerin bekleyen ihtiyaçlarını, gönüllü eşleşmelerini ve bugün öncelik verilmesi gereken işleri tek ekranda sakin biçimde takip edin.</p>
+        </div>
+
+        <div class="card-grid two" aria-label="Koordinatör odağı">
+            <article class="card stack-sm panel-soft" aria-labelledby="coordinator-focus-heading">
+                <h2 id="coordinator-focus-heading" class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-compass"></use></svg>
+                    Bugün odağınız
+                </h2>
+                <p class="section-note">İlk olarak süre baskısı taşıyan ve gönüllü ataması bekleyen kayıtları ele almak koordinasyonu hızlandırır.</p>
+                <div class="feed-meta">
+                    <span><strong>{{ overdue_request_count }}</strong> süresi geçen talep</span>
+                    <span><strong>{{ due_soon_request_count }}</strong> süresi yaklaşan talep</span>
+                </div>
+                <div class="feed-meta">
+                    <span><strong>{{ unmatched_request_count }}</strong> atanmamış aktif kayıt</span>
+                    <span><strong>{{ unassigned_critical_count }}</strong> atanmamış kritik kayıt</span>
+                </div>
+            </article>
+
+            <article class="card stack-sm" aria-labelledby="coordinator-support-heading">
+                <h2 id="coordinator-support-heading" class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-shield"></use></svg>
+                    Koordinasyon notu
+                </h2>
+                <p class="section-note">Bu panel, yoğun anlarda önce hangi talebe dönmeniz gerektiğini hızlıca fark etmeniz için düzenlendi.</p>
+                <p><strong>Önerilen sıra:</strong> süresi geçenler, kritik ama atanmamış olanlar, ardından süresi yaklaşan aktif talepler.</p>
+                <p class="muted">Kullanıcı tarafında bir sorun fark ederseniz hızlı kullanıcı filtrelerinden profili eksik veya pasif hesapları da kontrol edebilirsiniz.</p>
+            </article>
+        </div>
+
+        <nav class="section-jump" aria-label="Koordinatör paneli bölümleri">
+            <a class="section-chip" href="#koordinasyon-ozeti">
+                <svg class="icon" aria-hidden="true"><use href="#icon-home"></use></svg>
+                Özet
+            </a>
+            <a class="section-chip" href="#zaman-baskisi">
+                <svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg>
+                Zaman baskısı
+            </a>
+            <a class="section-chip" href="#kritik-talepler">
+                <svg class="icon" aria-hidden="true"><use href="#icon-filter"></use></svg>
+                Kritik talepler
+            </a>
+            <a class="section-chip" href="#mudahele-bekleyenler">
+                <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+                Müdahale bekleyenler
+            </a>
+            <a class="section-chip" href="#talep-aksiyonlari">
+                <svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg>
+                Talep aksiyonları
+            </a>
+            <a class="section-chip" href="#kullanici-aksiyonlari">
+                <svg class="icon" aria-hidden="true"><use href="#icon-user"></use></svg>
+                Kullanıcı aksiyonları
+            </a>
+        </nav>
+
+        <div id="koordinasyon-ozeti" class="metric-grid two section-anchor" aria-label="Koordinasyon özeti">
+            <article class="metric-card">
+                <span class="metric-label">Toplam talep</span>
+                <span class="metric-value">{{ total_request_count }}</span>
+            </article>
+            <article class="metric-card">
+                <span class="metric-label">Atanmamış aktif talep</span>
+                <span class="metric-value">{{ unmatched_request_count }}</span>
+            </article>
+            <article class="metric-card">
+                <span class="metric-label">Kritik öncelikli aktif talep</span>
+                <span class="metric-value">{{ critical_request_count }}</span>
+            </article>
+            <article class="metric-card">
+                <span class="metric-label">Pasif kullanıcı</span>
+                <span class="metric-value">{{ inactive_user_count }}</span>
+            </article>
+            <article class="metric-card">
+                <span class="metric-label">Süresi yaklaşan aktif talep</span>
+                <span class="metric-value">{{ due_soon_request_count }}</span>
+            </article>
+            <article class="metric-card">
+                <span class="metric-label">Süresi geçen aktif talep</span>
+                <span class="metric-value">{{ overdue_request_count }}</span>
+            </article>
+        </div>
+
+        <div class="card-grid two">
+            <article class="card stack-sm" aria-labelledby="quick-access-heading">
+                <h2 id="quick-access-heading" class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                    Hızlı erişim
+                </h2>
+                <p class="section-note">Günün akışını bölmeden en sık ihtiyaç duyduğunuz ekranlara ve hazır filtrelere buradan geçebilirsiniz.</p>
+                <div class="action-row">
+                    <a class="button button-secondary" href="{% url 'support:coordinator_request_list' %}">
+                        <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                        Tüm talepleri görüntüle
+                    </a>
+                    <a class="button button-secondary" href="{% url 'users:coordinator_user_list' %}">
+                        <svg class="icon" aria-hidden="true"><use href="#icon-user"></use></svg>
+                        Kullanıcıları yönet
+                    </a>
+                    <a class="button button-secondary" href="/admin/">
+                        <svg class="icon" aria-hidden="true"><use href="#icon-filter"></use></svg>
+                        Sistem yönetimi
+                    </a>
+                </div>
+                <div class="action-row" aria-label="Hızlı talep filtreleri">
+                    {% for filter_link in request_filter_links %}
+                        <a class="button button-secondary" href="{{ filter_link.url }}">{{ filter_link.label }}</a>
+                    {% endfor %}
+                </div>
+                <div class="action-row" aria-label="Hızlı kullanıcı filtreleri">
+                    {% for filter_link in user_filter_links %}
+                        <a class="button button-secondary" href="{{ filter_link.url }}">{{ filter_link.label }}</a>
+                    {% endfor %}
+                </div>
+            </article>
+
+            <article class="card stack-sm" aria-labelledby="operations-summary-heading">
+                <h2 id="operations-summary-heading" class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg>
+                    Operasyon özeti
+                </h2>
+                <p class="section-note">Koordinasyon yükünü ve kullanıcı tarafındaki genel hareketi tek bakışta izleyin.</p>
+                <p><strong>Aktif kullanıcı:</strong> {{ active_user_count }}</p>
+                <p><strong>Müdahale bekleyen talep:</strong> {{ attention_requests|length }}</p>
+                <p><strong>Atanmamış kritik talep:</strong> {{ unassigned_critical_count }}</p>
+                <p><strong>Profili eksik kullanıcı:</strong> {{ incomplete_profile_count }}</p>
+                <p><strong>Toplam müdahale notu:</strong> {{ intervention_note_count }}</p>
+                <p><strong>Okunmamış bildirim:</strong> {{ unread_notification_count }}</p>
+                <p><strong>Son bildirim:</strong> {% if recent_notifications %}{{ recent_notifications.0.title }}{% else %}Henüz bildirim yok{% endif %}</p>
+            </article>
+        </div>
+
+        <div id="zaman-baskisi" class="card-grid two section-anchor">
+            <article class="card stack-sm" aria-labelledby="overdue-requests-heading">
+                <h2 id="overdue-requests-heading" class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-alert"></use></svg>
+                    Süresi geçen talepler
+                </h2>
+                <p class="section-note">Bu kayıtlar öğrencinin bekleme süresini aşmış olabilir. Mümkünse ilk temas ve yönlendirme burada başlamalı.</p>
+                {% if overdue_requests %}
+                    <div class="feed" role="list" aria-label="Süresi geçen talepler">
+                        {% for request_item in overdue_requests %}
+                            <article class="feed-item feed-item-highlight" role="listitem">
+                                <h2 class="request-link-title">
+                                    <a class="request-link" href="{% url 'support:coordinator_request_detail' request_item.pk %}">
+                                        <span class="icon-wrap" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#icon-file"></use></svg></span>
+                                        <span class="request-link-text">{{ request_item.title }}</span>
+                                    </a>
+                                </h2>
+                                <div class="feed-meta">
+                                    {% render_badge 'priority' request_item.priority request_item.get_priority_display %}
+                                    {% render_badge 'status' request_item.status request_item.get_status_display %}
+                                </div>
+                                <p><strong>Son tarih:</strong> {{ request_item.effective_deadline_display }}</p>
+                                <p><strong>Kalan süre:</strong> {{ request_item.remaining_time_display }}</p>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state" role="status">
+                        <strong>Süresi geçen aktif talep yok</strong>
+                        <p class="muted">Şu anda son tarihini aşmış aktif bir talep görünmüyor.</p>
+                    </div>
+                {% endif %}
+            </article>
+
+            <article class="card stack-sm" aria-labelledby="due-soon-requests-heading">
+                <h2 id="due-soon-requests-heading" class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg>
+                    Süresi yaklaşan talepler
+                </h2>
+                <p class="section-note">Önümüzdeki 3 gün içinde tamamlanması beklenen talepler. Erken yönlendirme, sürecin tıkanmasını önler.</p>
+                {% if due_soon_requests %}
+                    <div class="feed" role="list" aria-label="Süresi yaklaşan talepler">
+                        {% for request_item in due_soon_requests %}
+                            <article class="feed-item" role="listitem">
+                                <h2 class="request-link-title">
+                                    <a class="request-link" href="{% url 'support:coordinator_request_detail' request_item.pk %}">
+                                        <span class="icon-wrap" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#icon-file"></use></svg></span>
+                                        <span class="request-link-text">{{ request_item.title }}</span>
+                                    </a>
+                                </h2>
+                                <div class="feed-meta">
+                                    {% render_badge 'priority' request_item.priority request_item.get_priority_display %}
+                                    {% render_badge 'urgency' request_item.urgency request_item.get_urgency_display %}
+                                </div>
+                                <p><strong>Son tarih:</strong> {{ request_item.effective_deadline_display }}</p>
+                                <p><strong>Kalan süre:</strong> {{ request_item.remaining_time_display }}</p>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state" role="status">
+                        <strong>Süresi yaklaşan aktif talep yok</strong>
+                        <p class="muted">Önümüzdeki üç gün içinde tamamlanması gereken aktif bir talep görünmüyor.</p>
+                    </div>
+                {% endif %}
+            </article>
+        </div>
+
+        <div class="card-grid two">
+            <article id="kritik-talepler" class="card stack-sm section-anchor" aria-labelledby="critical-requests-heading">
+                <h2 id="critical-requests-heading" class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-filter"></use></svg>
+                    Kritik talepler
+                </h2>
+                <p class="section-note">Koordinasyon önceliği özellikle yükseltilmiş aktif talepler burada görünür. Bu bölüm, yüksek dikkat gerektiren kayıtları ayırır.</p>
+                {% if critical_requests %}
+                    <div class="feed" role="list" aria-label="Kritik talepler listesi">
+                        {% for request_item in critical_requests %}
+                            <article class="feed-item feed-item-highlight" role="listitem">
+                                <h2 class="request-link-title">
+                                    <a class="request-link" href="{% url 'support:coordinator_request_detail' request_item.pk %}">
+                                        <span class="icon-wrap" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#icon-file"></use></svg></span>
+                                        <span class="request-link-text">{{ request_item.title }}</span>
+                                    </a>
+                                </h2>
+                                <div class="feed-meta">
+                                    {% render_badge 'priority' request_item.priority request_item.get_priority_display %}
+                                    {% render_badge 'status' request_item.status request_item.get_status_display %}
+                                    {% render_badge 'category' request_item.category request_item.get_category_display %}
+                                </div>
+                                <p><strong>Talep sahibi:</strong> {{ request_item.created_by }}</p>
+                                <p><strong>Gönüllü:</strong> {{ request_item.assigned_volunteer|default:"Henüz atanmadı" }}</p>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state" role="status">
+                        <strong>Kritik öncelikli aktif talep yok</strong>
+                        <p class="muted">Kritik öncelik verilen bir kayıt oluştuğunda burada görünür.</p>
+                    </div>
+                {% endif %}
+            </article>
+
+            <article id="mudahele-bekleyenler" class="card stack-sm section-anchor" aria-labelledby="attention-requests-heading">
+                <h2 id="attention-requests-heading" class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+                    Müdahale bekleyenler
+                </h2>
+                <p class="section-note">Henüz gönüllüye bağlanmamış veya koordine edilmesi gereken aktif kayıtları hızlıca ayırın.</p>
+                {% if attention_requests %}
+                    <div class="feed" role="list" aria-label="Müdahale bekleyen talepler listesi">
+                        {% for request_item in attention_requests %}
+                            <article class="feed-item" role="listitem">
+                                <h2 class="request-link-title">
+                                    <a class="request-link" href="{% url 'support:coordinator_request_detail' request_item.pk %}">
+                                        <span class="icon-wrap" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#icon-file"></use></svg></span>
+                                        <span class="request-link-text">{{ request_item.title }}</span>
+                                    </a>
+                                </h2>
+                                <div class="feed-meta">
+                                    {% render_badge 'priority' request_item.priority request_item.get_priority_display %}
+                                    {% render_badge 'status' request_item.status request_item.get_status_display %}
+                                </div>
+                                <p><strong>Talep sahibi:</strong> {{ request_item.created_by }}</p>
+                                <p><strong>Gönüllü:</strong> {{ request_item.assigned_volunteer|default:"Henüz atanmadı" }}</p>
+                                <p class="muted">
+                                    {% if request_item.priority == "critical" %}
+                                        Bu talep kritik öncelikte.
+                                    {% elif not request_item.assigned_volunteer %}
+                                        Bu talep henüz gönüllüye atanmadı.
+                                    {% else %}
+                                        Bu talep koordinatör incelemesi için listelendi.
+                                    {% endif %}
+                                </p>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state" role="status">
+                        <strong>Müdahale bekleyen kayıt yok</strong>
+                        <p class="muted">Atanmamış veya kritik öncelikli aktif talepler burada listelenir.</p>
+                    </div>
+                {% endif %}
+            </article>
+        </div>
+
+        <div class="card-grid two">
+            <article id="talep-aksiyonlari" class="card stack-sm section-anchor" aria-labelledby="request-activity-heading">
+                <h2 id="request-activity-heading" class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-clock"></use></svg>
+                    Son talep aksiyonları
+                </h2>
+                {% if recent_request_activities %}
+                    <div class="timeline" role="list" aria-label="Son talep aksiyonları">
+                        {% for entry in recent_request_activities %}
+                            <article class="timeline-item" role="listitem">
+                                <div class="feed-meta">
+                                    <strong>{{ entry.get_action_type_display }}</strong>
+                                    <span>{{ entry.created_at|date:"d.m.Y H:i" }}</span>
+                                </div>
+                                <p>{{ entry.description }}</p>
+                                <p class="muted">Talep: <a class="request-inline-link" href="{% url 'support:coordinator_request_detail' entry.request.pk %}"><svg class="icon" aria-hidden="true"><use href="#icon-file"></use></svg>{{ entry.request.title }}</a></p>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state" role="status">
+                        <strong>Henüz talep aksiyonu yok</strong>
+                        <p class="muted">Talep üzerinde yapılan güncellemeler burada görünecek.</p>
+                    </div>
+                {% endif %}
+            </article>
+
+            <article class="card stack-sm" aria-labelledby="intervention-notes-heading">
+                <h2 id="intervention-notes-heading" class="section-heading">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-chat"></use></svg>
+                    Son koordinasyon notları
+                </h2>
+                {% if recent_intervention_notes %}
+                    <div class="timeline" role="list" aria-label="Son koordinasyon notları">
+                        {% for note in recent_intervention_notes %}
+                            <article class="timeline-item" role="listitem">
+                                <div class="feed-meta">
+                                    <strong>{{ note.author }}</strong>
+                                    {% render_badge 'priority' note.priority note.get_priority_display %}
+                                    <span>{{ note.created_at|date:"d.m.Y H:i" }}</span>
+                                </div>
+                                <p>{{ note.body }}</p>
+                                <p class="muted">Talep: <a class="request-inline-link" href="{% url 'support:coordinator_request_detail' note.request.pk %}"><svg class="icon" aria-hidden="true"><use href="#icon-file"></use></svg>{{ note.request.title }}</a></p>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state" role="status">
+                        <strong>Henüz koordinasyon notu yok</strong>
+                        <p class="muted">Koordinasyon sırasında eklenen notlar burada listelenecek.</p>
+                    </div>
+                {% endif %}
+            </article>
+        </div>
+
+        <div id="kullanici-aksiyonlari" class="card stack-sm section-anchor" aria-labelledby="user-actions-heading">
+            <h2 id="user-actions-heading" class="section-heading">
+                <svg class="icon" aria-hidden="true"><use href="#icon-user"></use></svg>
+                Son kullanıcı yönetimi aksiyonları
+            </h2>
+            {% if recent_user_management_actions %}
+                <div class="timeline" role="list" aria-label="Son kullanıcı yönetimi aksiyonları">
+                    {% for entry in recent_user_management_actions %}
+                        <article class="timeline-item" role="listitem">
+                            <div class="feed-meta">
+                                <strong>{{ entry.get_action_type_display }}</strong>
+                                <span>{{ entry.created_at|date:"d.m.Y H:i" }}</span>
+                            </div>
+                            <p><strong>Kullanıcı:</strong> <a href="{% url 'users:coordinator_user_detail' entry.target_user.pk %}">{{ entry.target_user }}</a></p>
+                            <p><strong>Yapan kişi:</strong> {{ entry.actor|default:"Sistem" }}</p>
+                            <p>{{ entry.note|default:"Bu işlem için not eklenmedi." }}</p>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state" role="status">
+                    <strong>Henüz kullanıcı yönetimi aksiyonu yok</strong>
+                    <p class="muted">Pasife alma ve yeniden aktive etme işlemleri burada görünecek.</p>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}

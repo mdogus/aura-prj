@@ -1,0 +1,76 @@
+{% load ui_extras %}
+
+{% if form.errors %}
+    <div
+        class="form-alert form-error-summary"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+        aria-labelledby="form-error-summary-title"
+        tabindex="-1"
+    >
+        <strong id="form-error-summary-title">Formda düzeltmeniz gereken alanlar var.</strong>
+        <p>Lütfen aşağıdaki hata mesajlarını inceleyip alanları yeniden kontrol edin.</p>
+        <ul class="form-error-summary-list">
+            {% for field in form %}
+                {% if field.errors and not field.is_hidden %}
+                    <li>
+                        <a href="#{{ field.id_for_label }}">
+                            {{ field.label }} alanındaki hataları inceleyin.
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+
+{% if form.non_field_errors %}
+    <div class="form-alert" role="alert">
+        {{ form.non_field_errors }}
+    </div>
+{% endif %}
+
+{% for field in form %}
+    {% if field.is_hidden %}
+        {{ field }}
+    {% else %}
+        <div class="field-group{% if field.errors %} field-group-error{% endif %}">
+            <h3 class="field-title" id="{{ field.id_for_label }}_heading">
+                <label for="{{ field.id_for_label }}">
+                    {{ field.label }}
+                    {% if field.field.required %}
+                        <span class="sr-only">(zorunlu alan)</span>
+                    {% endif %}
+                </label>
+            </h3>
+            {% render_field field %}
+            {% if field.help_text %}
+                <p
+                    class="field-help"
+                    id="{{ field.id_for_label }}_help"
+                >
+                    {{ field.help_text }}
+                </p>
+            {% endif %}
+            {% if field.name == 'category' %}
+                <div
+                    class="field-help category-help"
+                    id="id_category_detail"
+                    role="status"
+                    aria-live="polite"
+                    aria-atomic="true"
+                >
+                    Lütfen bir kategori seçin. Seçtiğiniz kategoriye ait kısa açıklama burada görünür.
+                </div>
+            {% endif %}
+            {% if field.errors %}
+                <ul class="errorlist" id="{{ field.id_for_label }}_error" role="alert">
+                    {% for error in field.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endfor %}

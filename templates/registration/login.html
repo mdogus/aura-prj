@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Giriş Yap | AURA{% endblock %}
+
+{% block content %}
+    <section class="panel stack" aria-labelledby="login-title">
+        <div class="page-intro">
+            <p class="eyebrow">
+                <svg class="icon" aria-hidden="true"><use href="#icon-user"></use></svg>
+                Hesabınıza erişin
+            </p>
+            <h1 id="login-title">Giriş yap</h1>
+            <p class="muted">Destek süreçlerinizi, bildirimlerinizi ve paylaşılan materyalleri buradan yönetin.</p>
+        </div>
+
+        <div class="note-card" role="note" aria-labelledby="login-note-title">
+            <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+            <div>
+                <strong id="login-note-title">Erişilebilir giriş</strong>
+                <p>Alan etiketleri ve hata mesajları ekran okuyucu ile uyumlu olacak şekilde ayrı ayrı gösterilir.</p>
+            </div>
+        </div>
+
+        <form method="post" novalidate aria-describedby="login-help">
+            {% csrf_token %}
+            <p id="login-help" class="field-help">Kullanıcı adı ve şifrenizi girin. Zorunlu alanlar form içinde ayrıca belirtilir.</p>
+            {% include "includes/form_fields.html" with form=form %}
+            <div class="form-actions">
+                <button type="submit">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+                    Giriş yap
+                </button>
+            </div>
+        </form>
+
+        <p><a href="{% url 'password_reset' %}">Şifremi unuttum</a></p>
+    </section>
+{% endblock %}
