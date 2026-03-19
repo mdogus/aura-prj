@@ -80,6 +80,7 @@ python manage.py test
 - `docs/phase-1-product-scope.md`
 - `docs/phase-1-delivery-plan.md`
 - `docs/phase-1-pilot-readiness-checklist.md`
+- `docs/deploy-render.md`
 - `docs/pilot-user-plan.md`
 - `docs/pilot-scenario-validation.md`
 

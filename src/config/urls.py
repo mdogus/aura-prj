@@ -10,6 +10,7 @@ from users.forms import AuraAuthenticationForm, AuraPasswordResetForm
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('core.urls')),
+    path('healthz/', core_views.healthcheck_view, name='healthcheck'),
     path('accounts/', include('users.urls')),
     path('notifications/', include('notifications.urls')),
     path(

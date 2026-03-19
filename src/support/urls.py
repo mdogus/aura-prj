@@ -7,6 +7,7 @@ from .views import (
     CoordinatorRequestDetailView,
     CoordinatorRequestListView,
     CoordinatorRequestStatusUpdateView,
+    RequestMaterialDownloadView,
     StudentRequestCreateView,
     StudentRequestDetailView,
     StudentRequestListView,
@@ -25,6 +26,11 @@ from .views import (
 app_name = 'support'
 
 urlpatterns = [
+    path(
+        'materials/<int:pk>/download/',
+        RequestMaterialDownloadView.as_view(),
+        name='request_material_download',
+    ),
     path('requests/', StudentRequestListView.as_view(), name='student_request_list'),
     path('requests/new/', StudentRequestCreateView.as_view(), name='student_request_create'),
     path(

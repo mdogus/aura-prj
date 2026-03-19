@@ -283,7 +283,7 @@
                                     <span>Dosya: {{ material.file.name|basename }}</span>
                                     <span>Boyut: {{ material.file.size|filesizeformat }}</span>
                                 </div>
-                                <p><a href="{{ material.file.url }}">Dosyayı aç</a></p>
+                                <p><a href="{% url 'support:request_material_download' material.pk %}">Dosyayı aç</a></p>
                                 <p class="muted">Yükleyen: {{ material.uploaded_by }}</p>
                             </article>
                         {% endfor %}

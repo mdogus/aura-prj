@@ -2,9 +2,10 @@ from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.core.exceptions import SuspiciousFileOperation
 from django.db.models import Case, Count, IntegerField, Q, Value, When
-from django.http import HttpResponseRedirect
+from django.http import FileResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -26,6 +27,7 @@ from .forms import (
     VolunteerRequestMaterialForm,
 )
 from .models import (
+    RequestMaterial,
     SupportRequest,
     SupportRequestActivityLog,
     SupportRequestInterventionNote,
@@ -90,6 +92,18 @@ def log_request_activity(request_item, action_type, description, actor=None):
     )
 
 
+def user_can_access_request(user, request_item):
+    if not user.is_authenticated:
+        return False
+    if user.role in {User.Roles.COORDINATOR, User.Roles.ACADEMIC_ADVISOR}:
+        return True
+    if request_item.created_by_id == user.id:
+        return True
+    if request_item.assigned_volunteer_id == user.id:
+        return True
+    return False
+
+
 def intervention_priority_order():
     return Case(
         When(
@@ -103,6 +117,27 @@ def intervention_priority_order():
         default=Value(2),
         output_field=IntegerField(),
     )
+
+
+class RequestMaterialDownloadView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        material = get_object_or_404(
+            RequestMaterial.objects.select_related(
+                "request",
+                "request__created_by",
+                "request__assigned_volunteer",
+            ),
+            pk=pk,
+        )
+        if not user_can_access_request(request.user, material.request):
+            raise PermissionDenied
+
+        file_handle = material.file.open("rb")
+        return FileResponse(
+            file_handle,
+            as_attachment=False,
+            filename=material.file.name.split("/")[-1],
+        )
 
 
 class RequestCommunicationContextMixin:

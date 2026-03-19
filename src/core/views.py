@@ -1,9 +1,14 @@
+from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.generic import TemplateView
 
 
 class HomeView(TemplateView):
     template_name = 'core/home.html'
+
+
+def healthcheck_view(request):
+    return HttpResponse('ok', content_type='text/plain')
 
 
 def permission_denied_view(request, exception):
