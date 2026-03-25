@@ -445,14 +445,50 @@
                             <article class="feed-item" role="listitem">
                                 <div class="feed-meta">
                                     <strong>{{ material.title }}</strong>
-                                    <span>{{ material.created_at|date:"d.m.Y H:i" }}</span>
+                                    <span>v{{ material.version }} &mdash; {{ material.created_at|date:"d.m.Y H:i" }}</span>
+                                    {% if material.status == "approved" %}
+                                        <span class="badge badge-success" aria-label="Onaylandı">Onaylandı</span>
+                                    {% elif material.status == "revision_requested" %}
+                                        <span class="badge badge-warning" aria-label="Revizyon istendi">Revizyon istendi</span>
+                                    {% else %}
+                                        <span class="badge badge-muted" aria-label="Taslak">Taslak</span>
+                                    {% endif %}
+                                    {% if material.parent_material %}
+                                        <span class="muted" aria-label="Önceki versiyonun revizyonu">← v{{ material.parent_material.version }} revizyonu</span>
+                                    {% endif %}
                                 </div>
                                 <p>{{ material.description|default:"Açıklama yok." }}</p>
+                                {% if material.revision_note %}
+                                    <div class="note-card note-card-sm" role="note" aria-label="Koordinatör notu">
+                                        <svg class="icon" aria-hidden="true"><use href="#icon-chat"></use></svg>
+                                        <p><strong>Koordinatör notu:</strong> {{ material.revision_note }}</p>
+                                    </div>
+                                {% endif %}
                                 <div class="file-meta">
                                     <span>Dosya: {{ material.file.name|basename }}</span>
                                     <span>Boyut: {{ material.file.size|filesizeformat }}</span>
                                 </div>
-                                <p><a href="{% url 'support:request_material_download' material.pk %}">Dosyayı aç</a></p>
+                                <div class="feed-actions">
+                                    <a href="{% url 'support:request_material_download' material.pk %}">Dosyayı aç</a>
+                                    {% if user.role == "coordinator" %}
+                                        {% if material.status != "approved" %}
+                                            <a href="{% url 'support:coordinator_material_approve' material.pk %}" class="button button-sm button-success">
+                                                Onayla &amp; Kütüphaneye ekle
+                                            </a>
+                                        {% endif %}
+                                        {% if material.status == "draft" or material.status == "revision_requested" %}
+                                            <details class="inline-form-details">
+                                                <summary class="button button-sm button-warning">Revizyon iste</summary>
+                                                <form method="post" action="{% url 'support:coordinator_material_review' material.pk %}" class="inline-form" aria-label="Revizyon talebi formu">
+                                                    {% csrf_token %}
+                                                    <label for="revision_note_{{ material.pk }}">Revizyon notu</label>
+                                                    <textarea id="revision_note_{{ material.pk }}" name="revision_note" rows="3" class="input-field" required placeholder="Gönüllüye ne değiştirilmesi gerektiğini açıklayın."></textarea>
+                                                    <button type="submit" class="button button-sm button-warning">Gönder</button>
+                                                </form>
+                                            </details>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
                                 <p class="muted">Yükleyen: {{ material.uploaded_by }}</p>
                             </article>
                         {% endfor %}

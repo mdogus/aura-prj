@@ -1367,6 +1367,12 @@
                         <svg class="icon" aria-hidden="true"><use href="#icon-home"></use></svg>
                         Panel
                     </a>
+                    {% if user.role == "visually_impaired_student" or user.role == "coordinator" %}
+                        <a class="button button-secondary" href="{% url 'library:list' %}">
+                            <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                            Kütüphane
+                        </a>
+                    {% endif %}
                     <a class="button button-secondary" href="{% url 'notifications:list' %}">
                         <svg class="icon" aria-hidden="true"><use href="#icon-bell"></use></svg>
                         Bildirimler

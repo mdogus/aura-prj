@@ -77,7 +77,7 @@ class StudentRequestFlowTests(TestCase):
                 "urgency": SupportRequest.Urgencies.HIGH,
                 "duration_value": 3,
                 "duration_unit": SupportRequest.DurationUnits.DAY,
-                "requested_completion_date": "2026-03-21",
+                "requested_completion_date": (timezone.localdate() + timedelta(days=14)).isoformat(),
                 "preferred_timing": "Hafta ici 18:00 sonrasi",
             },
         )
@@ -95,7 +95,8 @@ class StudentRequestFlowTests(TestCase):
         )
         self.assertEqual(request_item.duration_value, 3)
         self.assertEqual(request_item.duration_unit, SupportRequest.DurationUnits.DAY)
-        self.assertEqual(str(request_item.requested_completion_date), "2026-03-21")
+        expected_date = (timezone.localdate() + timedelta(days=14)).isoformat()
+        self.assertEqual(str(request_item.requested_completion_date), expected_date)
         self.assertTrue(
             Notification.objects.filter(
                 recipient=self.coordinator,
@@ -1195,3 +1196,237 @@ class StudentRequestFlowTests(TestCase):
         self.assertContains(response, due_soon_request.title)
         self.assertNotContains(response, "Tarihi uzak kayit")
         self.assertEqual(response.context["due_soon_result_count"], 1)
+
+
+class FileUploadSecurityTests(TestCase):
+    """
+    Dosya yükleme güvenlik testleri:
+    - 5 MB boyut limiti sunucu tarafında uygulanmalıdır.
+    - İzin verilmeyen MIME tipleri reddedilmelidir.
+    - Diskten silinen dosyalara indirme isteği 404 dönmelidir.
+    """
+
+    def setUp(self):
+        self.student = User.objects.create_user(
+            username="guvenlik_ogrenci",
+            email="guvenlik@example.com",
+            password="Testpass12345",
+            role=User.Roles.VISUALLY_IMPAIRED_STUDENT,
+            profile_completed=True,
+        )
+        self.coordinator = User.objects.create_user(
+            username="guvenlik_koord",
+            email="guvenlik_koord@example.com",
+            password="Testpass12345",
+            role=User.Roles.COORDINATOR,
+            profile_completed=True,
+        )
+        self.support_request = SupportRequest.objects.create(
+            created_by=self.student,
+            title="Güvenlik test talebi",
+            category=SupportRequest.Categories.ACADEMIC,
+            course_name="Test Dersi",
+            topic="Test Konusu",
+            description="Güvenlik testleri için oluşturuldu.",
+        )
+
+    def test_file_upload_rejects_oversized_file(self):
+        """5 MB'ı aşan dosyalar sunucu tarafında reddedilmelidir."""
+        self.client.force_login(self.student)
+        # 6 MB içerik (5 MB limitini aşıyor)
+        large_content = b"x" * (6 * 1024 * 1024)
+        large_file = SimpleUploadedFile(
+            "buyuk_dosya.pdf",
+            large_content,
+            content_type="application/pdf",
+        )
+        response = self.client.post(
+            reverse(
+                "support:student_request_material_create",
+                args=[self.support_request.pk],
+            ),
+            {
+                "title": "Büyük dosya",
+                "description": "Boyutu aşıyor",
+                "file": large_file,
+            },
+        )
+        # Form hatayla dönmeli, kayıt oluşturulmamalı
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "5 MB")
+        self.assertFalse(
+            RequestMaterial.objects.filter(request=self.support_request).exists()
+        )
+
+    def test_file_upload_rejects_disallowed_mime_type(self):
+        """İzin verilmeyen dosya türleri reddedilmelidir."""
+        self.client.force_login(self.student)
+        malicious_file = SimpleUploadedFile(
+            "betik.py",
+            b"import os; os.system('rm -rf /')",
+            content_type="text/x-python",
+        )
+        response = self.client.post(
+            reverse(
+                "support:student_request_material_create",
+                args=[self.support_request.pk],
+            ),
+            {
+                "title": "Zararlı script",
+                "description": "İzin verilmez",
+                "file": malicious_file,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "desteklenmiyor")
+        self.assertFalse(
+            RequestMaterial.objects.filter(request=self.support_request).exists()
+        )
+
+    def test_file_upload_accepts_valid_pdf(self):
+        """Geçerli PDF dosyaları kabul edilmelidir."""
+        self.client.force_login(self.student)
+        valid_pdf = SimpleUploadedFile(
+            "ders_notu.pdf",
+            b"%PDF-1.4 gecerli icerik",
+            content_type="application/pdf",
+        )
+        response = self.client.post(
+            reverse(
+                "support:student_request_material_create",
+                args=[self.support_request.pk],
+            ),
+            {
+                "title": "Ders notu",
+                "description": "Geçerli PDF",
+                "file": valid_pdf,
+            },
+        )
+        self.assertRedirects(
+            response,
+            reverse(
+                "support:student_request_detail",
+                args=[self.support_request.pk],
+            )
+            + "?section=materials",
+        )
+        self.assertTrue(
+            RequestMaterial.objects.filter(
+                request=self.support_request,
+                title="Ders notu",
+            ).exists()
+        )
+
+    def test_material_download_returns_404_when_file_missing_on_disk(self):
+        """Diskten silinen dosyalara indirme isteği 500 yerine 404 dönmelidir."""
+        material = RequestMaterial.objects.create(
+            request=self.support_request,
+            uploaded_by=self.student,
+            title="Silinmiş dosya",
+            description="Bu dosya diskte mevcut değil.",
+            # Gerçekte var olmayan bir yol
+            file="request_materials/2000/01/01/hayalet-dosya-000.pdf",
+        )
+        self.client.force_login(self.student)
+        response = self.client.get(
+            reverse("support:request_material_download", args=[material.pk])
+        )
+        self.assertEqual(response.status_code, 404)
+
+
+class RoleAccessControlTests(TestCase):
+    """
+    Rol tabanlı erişim kontrolünün edge-case testleri.
+    Yanlış roldeki kullanıcılar korumalı view'lara erişememeli.
+    """
+
+    def setUp(self):
+        self.student = User.objects.create_user(
+            username="rol_test_ogrenci",
+            email="rol_ogrenci@example.com",
+            password="Testpass12345",
+            role=User.Roles.VISUALLY_IMPAIRED_STUDENT,
+            profile_completed=True,
+        )
+        self.volunteer = User.objects.create_user(
+            username="rol_test_gonullu",
+            email="rol_gonullu@example.com",
+            password="Testpass12345",
+            role=User.Roles.VOLUNTEER_STUDENT,
+            profile_completed=True,
+        )
+        self.advisor = User.objects.create_user(
+            username="rol_test_danisman",
+            email="rol_danisman@example.com",
+            password="Testpass12345",
+            role=User.Roles.ACADEMIC_ADVISOR,
+            profile_completed=True,
+        )
+        self.support_request = SupportRequest.objects.create(
+            created_by=self.student,
+            title="Rol testi talebi",
+            category=SupportRequest.Categories.ACADEMIC,
+            course_name="Test",
+            topic="Test",
+            description="Açıklama.",
+        )
+
+    def test_volunteer_cannot_create_student_request(self):
+        """Gönüllü öğrenci, görme engelli öğrenciye özel talep oluşturma sayfasına erişemez."""
+        self.client.force_login(self.volunteer)
+        response = self.client.get(reverse("support:student_request_create"))
+        self.assertEqual(response.status_code, 403)
+
+    def test_student_cannot_access_volunteer_open_request_list(self):
+        """Görme engelli öğrenci, gönüllü açık talep listesine erişemez."""
+        self.client.force_login(self.student)
+        response = self.client.get(reverse("support:volunteer_open_request_list"))
+        self.assertEqual(response.status_code, 403)
+
+    def test_student_cannot_access_coordinator_request_list(self):
+        """Görme engelli öğrenci, koordinatör talep listesine erişemez."""
+        self.client.force_login(self.student)
+        response = self.client.get(reverse("support:coordinator_request_list"))
+        self.assertEqual(response.status_code, 403)
+
+    def test_volunteer_cannot_access_coordinator_request_list(self):
+        """Gönüllü öğrenci, koordinatör talep listesine erişemez."""
+        self.client.force_login(self.volunteer)
+        response = self.client.get(reverse("support:coordinator_request_list"))
+        self.assertEqual(response.status_code, 403)
+
+    def test_advisor_can_access_coordinator_request_list(self):
+        """Akademik danışman, koordinatör talep listesini görüntüleyebilir."""
+        self.client.force_login(self.advisor)
+        response = self.client.get(reverse("support:coordinator_request_list"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_unauthenticated_user_redirected_from_student_request_list(self):
+        """Kimliği doğrulanmamış kullanıcı, giriş sayfasına yönlendirilmelidir."""
+        response = self.client.get(reverse("support:student_request_list"))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/accounts/login/", response["Location"])
+
+    def test_inactive_student_is_logged_out_and_redirected(self):
+        """Deaktif edilmiş kullanıcı oturumu kapatılmalı ve giriş sayfasına yönlendirilmelidir."""
+        self.student.is_active = False
+        self.student.save()
+        self.client.force_login(self.student)
+        response = self.client.get(reverse("support:student_request_list"))
+        # Deaktif kullanıcı login sayfasına yönlendirilmeli
+        self.assertEqual(response.status_code, 302)
+
+    def test_student_cannot_access_other_students_request_detail(self):
+        """Öğrenci, başka bir öğrencinin talep detayına erişememeli."""
+        other_student = User.objects.create_user(
+            username="baska_ogrenci",
+            email="baska@example.com",
+            password="Testpass12345",
+            role=User.Roles.VISUALLY_IMPAIRED_STUDENT,
+            profile_completed=True,
+        )
+        self.client.force_login(other_student)
+        response = self.client.get(
+            reverse("support:student_request_detail", args=[self.support_request.pk])
+        )
+        self.assertEqual(response.status_code, 404)

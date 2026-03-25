@@ -6,3 +6,5 @@ __pycache__/
 src/db.sqlite3
 media/
 staticfiles/
+.env
+.env.local

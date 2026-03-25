@@ -106,6 +106,23 @@ class SupportRequest(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["status"], name="supportreq_status_idx"),
+            models.Index(fields=["priority"], name="supportreq_priority_idx"),
+            models.Index(fields=["category"], name="supportreq_category_idx"),
+            models.Index(
+                fields=["created_by", "-created_at"],
+                name="supportreq_createdby_date_idx",
+            ),
+            models.Index(
+                fields=["assigned_volunteer", "status"],
+                name="supportreq_vol_status_idx",
+            ),
+            models.Index(
+                fields=["requested_completion_date"],
+                name="supportreq_deadline_idx",
+            ),
+        ]
 
     CATEGORY_DESCRIPTIONS = {
         Categories.ACCESSIBLE_MATERIAL: (
@@ -259,6 +276,11 @@ class RequestMessage(models.Model):
 
 
 class RequestMaterial(models.Model):
+    class Statuses(models.TextChoices):
+        DRAFT = ("draft", "Taslak")
+        REVISION_REQUESTED = ("revision_requested", "Revizyon istendi")
+        APPROVED = ("approved", "Onaylandı")
+
     request = models.ForeignKey(
         SupportRequest,
         on_delete=models.CASCADE,
@@ -275,13 +297,30 @@ class RequestMaterial(models.Model):
         upload_to=request_material_upload_to,
         max_length=255,
     )
+    status = models.CharField(
+        max_length=24,
+        choices=Statuses.choices,
+        default=Statuses.DRAFT,
+    )
+    version = models.PositiveSmallIntegerField(default=1)
+    parent_material = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="revisions",
+    )
+    revision_note = models.TextField(
+        blank=True,
+        help_text="Koordinatörün revizyon talebi veya onay notu.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-created_at"]
 
     def __str__(self):
-        return self.title
+        return f"{self.title} (v{self.version})"
 
 
 class SupportRequestInterventionNote(models.Model):
@@ -324,6 +363,12 @@ class SupportRequestActivityLog(models.Model):
         INTERVENTION_NOTE = ("intervention_note", "Müdahale notu eklendi")
         MESSAGE_POSTED = ("message_posted", "Mesaj gönderildi")
         MATERIAL_UPLOADED = ("material_uploaded", "Materyal yüklendi")
+        MATERIAL_REVISION_REQUESTED = (
+            "material_revision_requested",
+            "Materyal revizyonu istendi",
+        )
+        MATERIAL_APPROVED = ("material_approved", "Materyal onaylandı")
+        MATERIAL_REVISED = ("material_revised", "Materyal revize edildi")
 
     request = models.ForeignKey(
         SupportRequest,

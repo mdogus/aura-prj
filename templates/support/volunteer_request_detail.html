@@ -276,14 +276,35 @@
                             <article class="feed-item" role="listitem">
                                 <div class="feed-meta">
                                     <strong>{{ material.title }}</strong>
-                                    <span>{{ material.created_at|date:"d.m.Y H:i" }}</span>
+                                    <span>v{{ material.version }} &mdash; {{ material.created_at|date:"d.m.Y H:i" }}</span>
+                                    {% if material.status == "approved" %}
+                                        <span class="badge badge-success" aria-label="Onaylandı">Onaylandı</span>
+                                    {% elif material.status == "revision_requested" %}
+                                        <span class="badge badge-warning" aria-label="Revizyon istendi">Revizyon istendi</span>
+                                    {% else %}
+                                        <span class="badge badge-muted" aria-label="Taslak">Taslak</span>
+                                    {% endif %}
                                 </div>
                                 <p>{{ material.description|default:"Açıklama yok." }}</p>
+                                {% if material.revision_note %}
+                                    <div class="note-card note-card-sm" role="note" aria-label="Koordinatör notu">
+                                        <svg class="icon" aria-hidden="true"><use href="#icon-chat"></use></svg>
+                                        <p><strong>Koordinatör notu:</strong> {{ material.revision_note }}</p>
+                                    </div>
+                                {% endif %}
                                 <div class="file-meta">
                                     <span>Dosya: {{ material.file.name|basename }}</span>
                                     <span>Boyut: {{ material.file.size|filesizeformat }}</span>
                                 </div>
-                                <p><a href="{% url 'support:request_material_download' material.pk %}">Dosyayı aç</a></p>
+                                <div class="feed-actions">
+                                    <a href="{% url 'support:request_material_download' material.pk %}">Dosyayı aç</a>
+                                    {% if material.uploaded_by == user and material.status == "revision_requested" %}
+                                        <a href="{% url 'support:volunteer_material_revise' material.pk %}" class="button button-sm button-primary">
+                                            <svg class="icon" aria-hidden="true"><use href="#icon-upload"></use></svg>
+                                            Revize edilmiş dosyayı yükle
+                                        </a>
+                                    {% endif %}
+                                </div>
                                 <p class="muted">Yükleyen: {{ material.uploaded_by }}</p>
                             </article>
                         {% endfor %}

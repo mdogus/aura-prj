@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 PROJECT_ROOT = BASE_DIR.parent
@@ -15,15 +16,20 @@ def env_list(name, default=""):
     return [item.strip() for item in raw_value.split(",") if item.strip()]
 
 
-DEBUG = env_flag("DEBUG", default=True)
-SECRET_KEY = os.getenv(
-    "SECRET_KEY",
-    "django-insecure-g5_y3e1qp2__1g%__9cz*9t3*g_z(kdkw6we^35e_6sairgn=q",
-)
+DEBUG = env_flag("DEBUG", default=False)
+
+_secret_key = os.getenv("SECRET_KEY")
+if not _secret_key:
+    raise ImproperlyConfigured(
+        "SECRET_KEY ortam değişkeni tanımlanmamış. "
+        "Sunucuyu başlatmadan önce uzun ve rastgele bir değer atayın."
+    )
+SECRET_KEY = _secret_key
+
 ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "127.0.0.1,localhost")
-render_hostname = os.getenv("RENDER_EXTERNAL_HOSTNAME")
-if render_hostname and render_hostname not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append(render_hostname)
+railway_hostname = os.getenv("RAILWAY_PUBLIC_DOMAIN")
+if railway_hostname and railway_hostname not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(railway_hostname)
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -32,8 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_ratelimit',
     'core',
     'dashboard',
+    'library',
     'notifications',
     'support',
     'users',
@@ -128,9 +136,46 @@ AUTH_USER_MODEL = 'users.User'
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard:home'
 LOGOUT_REDIRECT_URL = 'home'
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+PASSWORD_RESET_TIMEOUT = 3600  # 1 saat
+
+# --- E-posta ---
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+    EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+    EMAIL_USE_TLS = env_flag('EMAIL_USE_TLS', default=True)
+    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
+    SERVER_EMAIL = DEFAULT_FROM_EMAIL
+
+# --- Dosya yükleme limitleri ---
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024   # 5 MB — bu boyutun üstü temp diske yazılır
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024   # POST body limiti
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+TEST_RUNNER = 'config.test_runner.AuraTestRunner'
+
+# --- Cache (rate limiting için zorunlu) ---
+# LocMemCache: her gunicorn worker kendi bellek cache'ini tutar.
+# Atomik sayaç desteği olmadığı için django-ratelimit'in strict kontrolü
+# uyarı verir; ancak küçük ölçekli (2 worker) dağıtımda limit değerleri
+# worker başına uygulandığından pratikte etkili koruma sağlar.
+# İleride Redis eklentisi kurulursa CACHES buradan kolayca güncellenebilir.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "aura-ratelimit",
+    }
+}
+
+# django-ratelimit, LocMemCache'in paylaşımlı olmadığı konusunda sistem check
+# hatası fırlatır. Bu mimari bilinçli bir tercih; gelecekte Redis ile değiştirilebilir.
+SILENCED_SYSTEM_CHECKS = ["django_ratelimit.E003", "django_ratelimit.W001"]
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
@@ -146,3 +191,53 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = env_flag("SECURE_HSTS_PRELOAD", True)
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_REFERRER_POLICY = 'same-origin'
+
+# --- Loglama ---
+# Railway stdout/stderr'i otomatik yakalar; dosya handler'a gerek yok.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": os.getenv("DJANGO_LOG_LEVEL", "WARNING"),
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "django.security": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "support": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "notifications": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}

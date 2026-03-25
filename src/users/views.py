@@ -4,8 +4,10 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
+from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django_ratelimit.decorators import ratelimit
 
 from notifications.models import Notification
 from notifications.services import create_notification
@@ -16,6 +18,11 @@ from .mixins import ActiveUserRequiredMixin, RoleRequiredMixin
 from .models import User, UserManagementAction
 
 
+@method_decorator(
+    # IP başına saatte en fazla 5 kayıt denemesi
+    ratelimit(key='ip', rate='5/h', method='POST', block=True),
+    name='dispatch',
+)
 class SignUpView(CreateView):
     form_class = SignUpForm
     model = User

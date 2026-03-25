@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load ui_extras %}
+
+{% block title %}Materyali Onayla | AURA{% endblock %}
+
+{% block content %}
+    <section class="panel stack" aria-labelledby="approve-material-title">
+        <div class="nav-row">
+            <a class="button button-secondary" href="{% url 'support:coordinator_request_detail' request_item.pk %}?section=materials">
+                <svg class="icon" aria-hidden="true"><use href="#icon-arrow-left"></use></svg>
+                Talep materyallerine dön
+            </a>
+        </div>
+
+        <div class="page-intro">
+            <p class="eyebrow">
+                <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+                Koordinatör — Materyal onayı
+            </p>
+            <h1 id="approve-material-title">Materyali Onayla ve Kütüphaneye Ekle</h1>
+        </div>
+
+        <article class="card stack-sm" aria-labelledby="material-info-heading">
+            <h2 id="material-info-heading" class="section-heading">Materyal bilgileri</h2>
+            <div class="feed-meta">
+                <strong>{{ material.title }}</strong>
+                <span>v{{ material.version }} &mdash; {{ material.created_at|date:"d.m.Y H:i" }}</span>
+                <span class="badge badge-muted">{{ material.get_status_display }}</span>
+            </div>
+            {% if material.description %}
+                <p>{{ material.description }}</p>
+            {% endif %}
+            <div class="file-meta">
+                <span>Dosya: {{ material.file.name|basename }}</span>
+                <span>Boyut: {{ material.file.size|filesizeformat }}</span>
+            </div>
+            <p class="muted">Yükleyen: {{ material.uploaded_by }}</p>
+            <p><a href="{% url 'support:request_material_download' material.pk %}">Dosyayı aç</a></p>
+        </article>
+
+        <article class="card stack-sm" aria-labelledby="approve-form-heading">
+            <h2 id="approve-form-heading" class="section-heading">Kütüphane kaydı</h2>
+            <p class="section-note">Materyali onayladığınızda aşağıdaki bilgilerle kütüphaneye eklenecektir. Kütüphane yalnızca görme engelli öğrenciler ve koordinatörler tarafından görüntülenebilir.</p>
+
+            <form method="post" novalidate aria-describedby="approve-form-heading">
+                {% csrf_token %}
+                {% include "includes/form_fields.html" with form=form %}
+                <div class="form-actions">
+                    <button type="submit" class="button button-success">
+                        <svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+                        Onayla ve kütüphaneye ekle
+                    </button>
+                    <a class="button button-secondary" href="{% url 'support:coordinator_request_detail' request_item.pk %}?section=materials">
+                        İptal
+                    </a>
+                </div>
+            </form>
+        </article>
+    </section>
+{% endblock %}

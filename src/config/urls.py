@@ -3,6 +3,7 @@ from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import include, path
+from django_ratelimit.decorators import ratelimit
 
 from core import views as core_views
 from users.forms import AuraAuthenticationForm, AuraPasswordResetForm
@@ -15,23 +16,30 @@ urlpatterns = [
     path('notifications/', include('notifications.urls')),
     path(
         'accounts/login/',
-        auth_views.LoginView.as_view(
-            template_name='registration/login.html',
-            authentication_form=AuraAuthenticationForm,
+        # IP başına 5 dakikada en fazla 10 oturum açma denemesi
+        ratelimit(key='ip', rate='10/5m', method='POST', block=True)(
+            auth_views.LoginView.as_view(
+                template_name='registration/login.html',
+                authentication_form=AuraAuthenticationForm,
+            )
         ),
         name='login',
     ),
     path(
         'accounts/password-reset/',
-        auth_views.PasswordResetView.as_view(
-            template_name='registration/password_reset_form.html',
-            form_class=AuraPasswordResetForm,
+        # IP başına saatte en fazla 5 şifre sıfırlama isteği
+        ratelimit(key='ip', rate='5/h', method='POST', block=True)(
+            auth_views.PasswordResetView.as_view(
+                template_name='registration/password_reset_form.html',
+                form_class=AuraPasswordResetForm,
+            )
         ),
         name='password_reset',
     ),
     path('accounts/', include('django.contrib.auth.urls')),
     path('dashboard/', include('dashboard.urls')),
     path('support/', include('support.urls')),
+    path('library/', include('library.urls')),
 ]
 
 if settings.DEBUG:

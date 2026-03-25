@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load ui_extras %}
+
+{% block title %}{{ item.title }} | Kütüphane | AURA{% endblock %}
+
+{% block content %}
+    <section class="panel stack" aria-labelledby="library-detail-title">
+        <div class="nav-row">
+            <a class="button button-secondary" href="{% url 'library:list' %}">
+                <svg class="icon" aria-hidden="true"><use href="#icon-arrow-left"></use></svg>
+                Kütüphaneye dön
+            </a>
+        </div>
+
+        <div class="page-intro">
+            <p class="eyebrow">
+                <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                Kütüphane materyali
+            </p>
+            <h1 id="library-detail-title">{{ item.title }}</h1>
+            <div class="feed-meta">
+                {% if item.category %}
+                    <span class="badge badge-muted">{{ item.category }}</span>
+                {% endif %}
+                <span class="muted">{{ item.added_at|date:"d.m.Y" }} tarihinde eklendi</span>
+            </div>
+        </div>
+
+        <article class="card stack-sm" aria-labelledby="library-detail-content-heading">
+            <h2 id="library-detail-content-heading" class="section-heading">Materyal bilgileri</h2>
+            {% if item.description %}
+                <p>{{ item.description }}</p>
+            {% endif %}
+            {% if item.tags %}
+                <p>
+                    <strong>Etiketler:</strong>
+                    <span class="muted">{{ item.tags }}</span>
+                </p>
+            {% endif %}
+            <div class="file-meta">
+                <span>Dosya: {{ item.material.file.name|basename }}</span>
+                <span>Boyut: {{ item.material.file.size|filesizeformat }}</span>
+            </div>
+            <p class="muted">
+                Yükleyen: {{ item.material.uploaded_by }}
+                &mdash;
+                Ekleyen: {{ item.added_by|default:"Koordinatör" }}
+            </p>
+            <div class="form-actions">
+                <a href="{% url 'library:download' item.pk %}" class="button">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-upload"></use></svg>
+                    Dosyayı indir
+                </a>
+            </div>
+        </article>
+
+        {% if user.role == "coordinator" %}
+            <article class="card stack-sm" aria-labelledby="library-source-heading">
+                <h2 id="library-source-heading" class="section-heading">Kaynak talep</h2>
+                <p>
+                    <a href="{% url 'support:coordinator_request_detail' item.material.request.pk %}">
+                        {{ item.material.request.title }}
+                    </a>
+                </p>
+                <p class="muted">Materyal sürümü: v{{ item.material.version }}</p>
+            </article>
+        {% endif %}
+    </section>
+{% endblock %}

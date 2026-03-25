@@ -42,6 +42,17 @@
             </article>
         </div>
 
+        <div class="action-row">
+            <a class="button button-secondary" href="{% url 'support:coordinator_request_list' %}">
+                <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                Tüm talepler
+            </a>
+            <a class="button button-secondary" href="{% url 'library:list' %}">
+                <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                Kütüphane
+            </a>
+        </div>
+
         <nav class="section-jump" aria-label="Koordinatör paneli bölümleri">
             <a class="section-chip" href="#koordinasyon-ozeti">
                 <svg class="icon" aria-hidden="true"><use href="#icon-home"></use></svg>

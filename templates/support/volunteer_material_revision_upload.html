@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load ui_extras %}
+
+{% block title %}Revize Dosya Yükle | AURA{% endblock %}
+
+{% block content %}
+    <section class="panel stack" aria-labelledby="revise-material-title">
+        <div class="nav-row">
+            <a class="button button-secondary" href="{% url 'support:volunteer_request_detail' request_item.pk %}?section=materials">
+                <svg class="icon" aria-hidden="true"><use href="#icon-arrow-left"></use></svg>
+                Talep materyallerine dön
+            </a>
+        </div>
+
+        <div class="page-intro">
+            <p class="eyebrow">
+                <svg class="icon" aria-hidden="true"><use href="#icon-upload"></use></svg>
+                Revizyon — Yeni versiyon yükle
+            </p>
+            <h1 id="revise-material-title">Revize Edilmiş Dosyayı Yükle</h1>
+        </div>
+
+        <article class="card stack-sm" aria-labelledby="original-material-heading">
+            <h2 id="original-material-heading" class="section-heading">Mevcut materyal</h2>
+            <div class="feed-meta">
+                <strong>{{ material.title }}</strong>
+                <span>v{{ material.version }}</span>
+                <span class="badge badge-warning" aria-label="Revizyon istendi">Revizyon istendi</span>
+            </div>
+            {% if material.revision_note %}
+                <div class="note-card" role="note" aria-label="Koordinatör revizyon notu">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-chat"></use></svg>
+                    <div>
+                        <strong>Koordinatör notu:</strong>
+                        <p>{{ material.revision_note }}</p>
+                    </div>
+                </div>
+            {% endif %}
+            <p><a href="{% url 'support:request_material_download' material.pk %}">Mevcut dosyayı aç</a></p>
+        </article>
+
+        <article class="card stack-sm" aria-labelledby="upload-form-heading">
+            <h2 id="upload-form-heading" class="section-heading">
+                Yeni versiyon yükle (v{{ material.version|add:1 }})
+            </h2>
+            <p class="section-note">Koordinatörün notuna göre düzenlediğiniz dosyayı yükleyin. Yeni dosya, önceki versiyonla birlikte sistemde saklanır.</p>
+
+            <form method="post" enctype="multipart/form-data" novalidate aria-describedby="upload-form-heading">
+                {% csrf_token %}
+                {% include "includes/form_fields.html" with form=form %}
+                <div class="form-actions">
+                    <button type="submit">
+                        <svg class="icon" aria-hidden="true"><use href="#icon-upload"></use></svg>
+                        Revize edilmiş dosyayı yükle
+                    </button>
+                    <a class="button button-secondary" href="{% url 'support:volunteer_request_detail' request_item.pk %}?section=materials">
+                        İptal
+                    </a>
+                </div>
+            </form>
+        </article>
+    </section>
+{% endblock %}

@@ -42,6 +42,16 @@ class Notification(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(
+                fields=["recipient", "-created_at"],
+                name="notif_recipient_date_idx",
+            ),
+            models.Index(
+                fields=["recipient", "is_read"],
+                name="notif_recipient_read_idx",
+            ),
+        ]
 
     def mark_as_read(self):
         if not self.is_read:

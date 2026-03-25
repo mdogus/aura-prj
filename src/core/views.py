@@ -1,6 +1,11 @@
-from django.http import HttpResponse
+import logging
+
+from django.db import OperationalError, connection
+from django.http import HttpResponse, HttpResponseServerError
 from django.shortcuts import render
 from django.views.generic import TemplateView
+
+logger = logging.getLogger(__name__)
 
 
 class HomeView(TemplateView):
@@ -8,7 +13,12 @@ class HomeView(TemplateView):
 
 
 def healthcheck_view(request):
-    return HttpResponse('ok', content_type='text/plain')
+    try:
+        connection.ensure_connection()
+    except OperationalError as exc:
+        logger.error("Healthcheck DB bağlantısı başarısız: %s", exc)
+        return HttpResponseServerError("db_unavailable", content_type="text/plain")
+    return HttpResponse("ok", content_type="text/plain")
 
 
 def permission_denied_view(request, exception):

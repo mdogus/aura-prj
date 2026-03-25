@@ -190,6 +190,19 @@ class RequestMessageForm(forms.ModelForm):
 
 
 class RequestMaterialForm(forms.ModelForm):
+    # Sunucu taraflı dosya kısıtlamaları
+    MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5 MB
+    ALLOWED_MIME_TYPES = {
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "text/plain",
+        "text/rtf",
+        "application/rtf",
+        "image/png",
+        "image/jpeg",
+    }
+
     class Meta:
         model = RequestMaterial
         fields = ("title", "description", "file")
@@ -211,7 +224,9 @@ class RequestMaterialForm(forms.ModelForm):
         self.fields["description"].help_text = (
             "Materyalin içeriğini ve hangi amaçla kullanılacağını kısaca açıklayın."
         )
-        self.fields["file"].help_text = "Yüklenen dosya talep içindeki ilgili kişilerle paylaşılır."
+        self.fields["file"].help_text = (
+            "Yüklenen dosya talep içindeki ilgili kişilerle paylaşılır. Maks. 5 MB."
+        )
         apply_common_field_attrs(
             self.fields["title"],
             "title",
@@ -223,6 +238,21 @@ class RequestMaterialForm(forms.ModelForm):
             "accept",
             ".pdf,.doc,.docx,.txt,.rtf,.png,.jpg,.jpeg",
         )
+
+    def clean_file(self):
+        file = self.cleaned_data.get("file")
+        if file:
+            if file.size > self.MAX_UPLOAD_SIZE:
+                raise forms.ValidationError(
+                    "Dosya boyutu 5 MB sınırını aşıyor. Lütfen daha küçük bir dosya yükleyin."
+                )
+            mime_type = getattr(file, "content_type", "")
+            if mime_type and mime_type not in self.ALLOWED_MIME_TYPES:
+                raise forms.ValidationError(
+                    "Bu dosya türü desteklenmiyor. "
+                    "İzin verilen türler: PDF, DOC, DOCX, TXT, RTF, PNG, JPG."
+                )
+        return file
 
 
 class StudentRequestMaterialForm(RequestMaterialForm):
@@ -251,4 +281,80 @@ class VolunteerRequestMaterialForm(RequestMaterialForm):
         )
         self.fields["file"].help_text = (
             "Yüklenen dosya öğrenci ve koordinasyon ekibiyle paylaşılır."
+        )
+
+
+class CoordinatorMaterialApproveForm(forms.Form):
+    """Koordinatörün materyali onaylayıp kütüphaneye eklerken doldurduğu form."""
+
+    approval_note = forms.CharField(
+        label="Onay notu (opsiyonel)",
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 3, "class": "input-field"}),
+        help_text="İsteğe bağlı: onay hakkında gönüllüye bir not bırakabilirsiniz.",
+    )
+    library_title = forms.CharField(
+        label="Kütüphane başlığı",
+        max_length=255,
+        widget=forms.TextInput(attrs={"class": "input-field"}),
+    )
+    library_description = forms.CharField(
+        label="Kütüphane açıklaması",
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 3, "class": "input-field"}),
+    )
+    library_category = forms.CharField(
+        label="Kategori",
+        required=False,
+        max_length=64,
+        widget=forms.TextInput(attrs={"class": "input-field"}),
+        help_text="Örn: Matematik, Türkçe, Biyoloji…",
+    )
+    library_tags = forms.CharField(
+        label="Etiketler",
+        required=False,
+        max_length=255,
+        widget=forms.TextInput(attrs={"class": "input-field"}),
+        help_text="Virgülle ayrılmış etiketler. Örn: üniversite, braille, özet",
+    )
+
+    def __init__(self, *args, initial_title=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if initial_title:
+            self.fields["library_title"].initial = initial_title
+        for name, field in self.fields.items():
+            apply_common_field_attrs(field, name)
+
+
+class MaterialRevisionRequestForm(forms.Form):
+    """Koordinatörün revizyon talebi için not girdiği form."""
+
+    revision_note = forms.CharField(
+        label="Revizyon notu",
+        widget=forms.Textarea(attrs={"rows": 4, "class": "input-field"}),
+        help_text="Gönüllüye ne değiştirilmesi gerektiğini açık ve net biçimde yazın.",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        apply_common_field_attrs(
+            self.fields["revision_note"],
+            "revision_note",
+            placeholder="Örn: Tablo açıklamalarına alternatif metin ekleyiniz.",
+        )
+
+
+class VolunteerMaterialRevisionUploadForm(RequestMaterialForm):
+    """Gönüllünün revizyon sonrası yeniden yükleme formu."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["title"].label = "Revize edilmiş dosya başlığı"
+        self.fields["description"].label = "Yapılan değişiklikler"
+        self.fields["file"].label = "Revize edilmiş dosya"
+        self.fields["description"].help_text = (
+            "Koordinatörün notuna göre yaptığınız değişiklikleri kısaca açıklayın."
+        )
+        self.fields["description"].widget.attrs["placeholder"] = (
+            "Örn: Tablolara alternatif metin eklendi, başlıklar yapılandırıldı."
         )

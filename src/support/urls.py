@@ -3,6 +3,8 @@ from django.urls import path
 from .views import (
     CoordinatorAssignVolunteerView,
     CoordinatorInterventionNoteCreateView,
+    CoordinatorMaterialApproveView,
+    CoordinatorMaterialReviewView,
     CoordinatorRequestPriorityUpdateView,
     CoordinatorRequestDetailView,
     CoordinatorRequestListView,
@@ -16,6 +18,7 @@ from .views import (
     StudentRequestStatusUpdateView,
     VolunteerActiveSupportListView,
     VolunteerClaimRequestView,
+    VolunteerMaterialRevisionUploadView,
     VolunteerOpenRequestListView,
     VolunteerRequestDetailView,
     VolunteerRequestMaterialCreateView,
@@ -83,6 +86,16 @@ urlpatterns = [
         CoordinatorInterventionNoteCreateView.as_view(),
         name='coordinator_request_note_create',
     ),
+    path(
+        'coordinator/materials/<int:pk>/review/',
+        CoordinatorMaterialReviewView.as_view(),
+        name='coordinator_material_review',
+    ),
+    path(
+        'coordinator/materials/<int:pk>/approve/',
+        CoordinatorMaterialApproveView.as_view(),
+        name='coordinator_material_approve',
+    ),
     path('volunteer/open/', VolunteerOpenRequestListView.as_view(), name='volunteer_open_request_list'),
     path('volunteer/active/', VolunteerActiveSupportListView.as_view(), name='volunteer_active_support_list'),
     path(
@@ -109,5 +122,10 @@ urlpatterns = [
         'volunteer/requests/<int:pk>/materials/',
         VolunteerRequestMaterialCreateView.as_view(),
         name='volunteer_request_material_create',
+    ),
+    path(
+        'volunteer/materials/<int:pk>/revise/',
+        VolunteerMaterialRevisionUploadView.as_view(),
+        name='volunteer_material_revise',
     ),
 ]

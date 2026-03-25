@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load ui_extras %}
+
+{% block title %}Erişilebilirlik Kütüphanesi | AURA{% endblock %}
+
+{% block content %}
+    <section class="panel stack" aria-labelledby="library-list-title">
+        <div class="page-intro">
+            <p class="eyebrow">
+                <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                Kütüphane
+            </p>
+            <h1 id="library-list-title">Erişilebilirlik Kütüphanesi</h1>
+            <p class="muted">Koordinatör onaylı erişilebilir materyaller burada listelenmektedir.</p>
+        </div>
+
+        <form method="get" class="filter-row" role="search" aria-label="Kütüphane arama">
+            <div class="filter-group">
+                <label for="q" class="visually-hidden">Arama</label>
+                <input
+                    id="q"
+                    type="search"
+                    name="q"
+                    value="{{ search_query }}"
+                    placeholder="Başlık veya etiket ara…"
+                    class="input-field"
+                    aria-label="Başlık veya etiket ara"
+                >
+            </div>
+            {% if categories %}
+                <div class="filter-group">
+                    <label for="category" class="visually-hidden">Kategori</label>
+                    <select id="category" name="category" class="input-field" aria-label="Kategoriye göre filtrele">
+                        <option value="">Tüm kategoriler</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat }}"{% if cat == selected_category %} selected{% endif %}>{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            {% endif %}
+            <button type="submit" class="button button-secondary">
+                <svg class="icon" aria-hidden="true"><use href="#icon-filter"></use></svg>
+                Filtrele
+            </button>
+            {% if search_query or selected_category %}
+                <a href="{% url 'library:list' %}" class="button button-secondary">Temizle</a>
+            {% endif %}
+        </form>
+
+        {% if items %}
+            <div class="feed" role="list" aria-label="Kütüphane materyalleri">
+                {% for item in items %}
+                    <article class="card stack-sm feed-item" role="listitem" aria-labelledby="library-item-{{ item.pk }}-title">
+                        <div class="feed-meta">
+                            <h2 id="library-item-{{ item.pk }}-title" class="section-heading-sm">
+                                <a href="{% url 'library:detail' item.pk %}">{{ item.title }}</a>
+                            </h2>
+                            <span>{{ item.added_at|date:"d.m.Y" }}</span>
+                            {% if item.category %}
+                                <span class="badge badge-muted">{{ item.category }}</span>
+                            {% endif %}
+                        </div>
+                        {% if item.description %}
+                            <p>{{ item.description|truncatechars:200 }}</p>
+                        {% endif %}
+                        {% if item.tags %}
+                            <p class="muted" aria-label="Etiketler">{{ item.tags }}</p>
+                        {% endif %}
+                        <div class="feed-actions">
+                            <a href="{% url 'library:detail' item.pk %}">Detay</a>
+                            <a href="{% url 'library:download' item.pk %}" class="button button-sm">
+                                <svg class="icon" aria-hidden="true"><use href="#icon-upload"></use></svg>
+                                İndir
+                            </a>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+
+            {% if is_paginated %}
+                <nav class="pagination" aria-label="Sayfalama">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}" class="button button-secondary">Önceki</a>
+                    {% endif %}
+                    <span aria-current="page">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}" class="button button-secondary">Sonraki</a>
+                    {% endif %}
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="empty-state" role="status">
+                <strong>Kütüphane henüz boş</strong>
+                <p class="muted">
+                    {% if search_query or selected_category %}
+                        Arama kriterlerinize uyan materyal bulunamadı.
+                    {% else %}
+                        Koordinatör onaylı materyal henüz eklenmemiş.
+                    {% endif %}
+                </p>
+            </div>
+        {% endif %}
+    </section>
+{% endblock %}
